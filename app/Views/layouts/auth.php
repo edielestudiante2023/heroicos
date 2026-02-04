@@ -104,9 +104,14 @@
             border: none;
         }
 
-        .logo-icon {
-            font-size: 3rem;
+        .logo-img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
             margin-bottom: 0.5rem;
+            border-radius: 50%;
+            background: white;
+            padding: 8px;
         }
 
         a {
@@ -124,9 +129,7 @@
             <div class="col-12">
                 <div class="auth-card mx-auto">
                     <div class="auth-header">
-                        <div class="logo-icon">
-                            <i class="bi bi-trophy-fill"></i>
-                        </div>
+                        <img src="<?= base_url('assets/images/heroicos.png') ?>" alt="Academia Heroicos" class="logo-img">
                         <h1>Academia Heroicos</h1>
                         <p>Escuela de Fútbol</p>
                     </div>

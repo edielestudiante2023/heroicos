@@ -257,9 +257,9 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <i class="bi bi-trophy-fill fs-1"></i>
+            <img src="<?= base_url('assets/images/heroicos.png') ?>" alt="Heroicos" style="width:60px;height:60px;object-fit:contain;border-radius:50%;background:white;padding:4px;">
             <h4>Heroicos</h4>
-            <small><?= session()->get('rol_nombre') ?? 'Usuario' ?></small>
+            <small><?= ucfirst(session()->get('rol_nombre') ?? 'Usuario') ?></small>
         </div>
 
         <nav class="sidebar-nav">
