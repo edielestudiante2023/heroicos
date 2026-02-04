@@ -29,7 +29,7 @@ class RoleFilter implements FilterInterface
             return;
         }
 
-        $userRole = $session->get('rol_slug');
+        $userRole = $session->get('rol_nombre');
 
         // Admin always has access
         if ($userRole === 'admin') {

@@ -15,9 +15,7 @@ class RoleModel extends Model
 
     protected $allowedFields = [
         'nombre',
-        'slug',
-        'descripcion',
-        'permisos'
+        'descripcion'
     ];
 
     // Dates
@@ -26,40 +24,23 @@ class RoleModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
 
-    // Validation
-    protected $validationRules = [
-        'nombre' => 'required|min_length[3]|max_length[50]',
-        'slug'   => 'required|alpha_dash|is_unique[roles.slug,id,{id}]',
-    ];
-
-    protected $validationMessages = [
-        'nombre' => [
-            'required'   => 'El nombre del rol es obligatorio.',
-            'min_length' => 'El nombre debe tener al menos 3 caracteres.',
-        ],
-        'slug' => [
-            'required'  => 'El slug es obligatorio.',
-            'is_unique' => 'Este slug ya existe.',
-        ],
-    ];
-
-    // Role constants
+    // Role constants (using 'nombre' values from DB)
     const ADMIN     = 'admin';
     const PROFESOR  = 'profesor';
     const ACUDIENTE = 'acudiente';
 
     /**
-     * Find role by slug
+     * Find role by nombre
      */
-    public function findBySlug(string $slug): ?array
+    public function findByNombre(string $nombre): ?array
     {
-        return $this->where('slug', $slug)->first();
+        return $this->where('nombre', $nombre)->first();
     }
 
     /**
-     * Get all active roles
+     * Get all roles
      */
-    public function getActiveRoles(): array
+    public function getAllRoles(): array
     {
         return $this->orderBy('nombre', 'ASC')->findAll();
     }
@@ -67,46 +48,25 @@ class RoleModel extends Model
     /**
      * Check if user has specific role
      */
-    public function userHasRole(int $userId, string $roleSlug): bool
+    public function userHasRole(int $userId, string $rolNombre): bool
     {
         $db = \Config\Database::connect();
-        $result = $db->table('users')
-                     ->select('roles.slug')
-                     ->join('roles', 'roles.id = users.role_id')
-                     ->where('users.id', $userId)
+        $result = $db->table('usuarios')
+                     ->select('roles.nombre')
+                     ->join('roles', 'roles.id = usuarios.rol_id')
+                     ->where('usuarios.id', $userId)
                      ->get()
                      ->getRowArray();
 
-        return $result && $result['slug'] === $roleSlug;
+        return $result && $result['nombre'] === $rolNombre;
     }
 
     /**
-     * Get permissions for role
+     * Get role ID by nombre
      */
-    public function getPermissions(int $roleId): array
+    public function getIdByNombre(string $nombre): ?int
     {
-        $role = $this->find($roleId);
-        if (!$role || empty($role['permisos'])) {
-            return [];
-        }
-        return json_decode($role['permisos'], true) ?? [];
-    }
-
-    /**
-     * Check if role has permission
-     */
-    public function hasPermission(int $roleId, string $permission): bool
-    {
-        $permissions = $this->getPermissions($roleId);
-        return in_array($permission, $permissions);
-    }
-
-    /**
-     * Get role ID by slug
-     */
-    public function getIdBySlug(string $slug): ?int
-    {
-        $role = $this->findBySlug($slug);
+        $role = $this->findByNombre($nombre);
         return $role ? (int)$role['id'] : null;
     }
 }

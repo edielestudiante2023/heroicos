@@ -14,40 +14,53 @@ class DashboardController extends BaseController
         $db = \Config\Database::connect();
         $userId = session()->get('user_id');
 
+        // Get acudiente ID from acudientes table
+        $acudiente = $db->table('acudientes')
+                        ->where('usuario_id', $userId)
+                        ->get()
+                        ->getRowArray();
+
+        $acudienteId = $acudiente['id'] ?? 0;
+
         // Get parent's students
-        $mis_estudiantes = $db->table('students')
-                              ->where('acudiente_id', $userId)
+        $mis_estudiantes = $db->table('estudiantes')
+                              ->where('acudiente_id', $acudienteId)
                               ->where('activo', 1)
                               ->get()
                               ->getResultArray();
 
-        // Get pending payments
+        // Get pending payments from cartera
         $pagos_pendientes = [];
         $saldo_total = 0;
 
         foreach ($mis_estudiantes as $estudiante) {
-            $pagos = $db->table('portfolio')
-                        ->where('student_id', $estudiante['id'])
-                        ->where('saldo >', 0)
-                        ->get()
-                        ->getResultArray();
+            $deudas = $db->table('cartera')
+                         ->where('estudiante_id', $estudiante['id'])
+                         ->where('saldo >', 0)
+                         ->get()
+                         ->getResultArray();
 
-            foreach ($pagos as $pago) {
-                $pago['estudiante_nombre'] = $estudiante['nombre'] . ' ' . $estudiante['apellido'];
-                $pagos_pendientes[] = $pago;
-                $saldo_total += $pago['saldo'];
+            foreach ($deudas as $deuda) {
+                $deuda['estudiante_nombre'] = $estudiante['nombres'] . ' ' . $estudiante['apellidos'];
+                $pagos_pendientes[] = $deuda;
+                $saldo_total += $deuda['saldo'];
             }
         }
 
         // Get recent payments
-        $pagos_recientes = $db->table('payments')
-                              ->select('payments.*, students.nombre, students.apellido')
-                              ->join('students', 'students.id = payments.student_id')
-                              ->whereIn('payments.student_id', array_column($mis_estudiantes, 'id') ?: [0])
-                              ->orderBy('payments.created_at', 'DESC')
-                              ->limit(5)
-                              ->get()
-                              ->getResultArray();
+        $estudianteIds = array_column($mis_estudiantes, 'id');
+        $pagos_recientes = [];
+
+        if (!empty($estudianteIds)) {
+            $pagos_recientes = $db->table('pagos')
+                                  ->select('pagos.*, estudiantes.nombres as nombre, estudiantes.apellidos as apellido')
+                                  ->join('estudiantes', 'estudiantes.id = pagos.estudiante_id')
+                                  ->whereIn('pagos.estudiante_id', $estudianteIds)
+                                  ->orderBy('pagos.created_at', 'DESC')
+                                  ->limit(5)
+                                  ->get()
+                                  ->getResultArray();
+        }
 
         return view('acudiente/dashboard', [
             'title'            => 'Dashboard Acudiente - Academia Heroicos',

@@ -6,30 +6,23 @@ use CodeIgniter\Model;
 
 class UserModel extends Model
 {
-    protected $table            = 'users';
+    protected $table            = 'usuarios';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
-    protected $useSoftDeletes   = true;
+    protected $useSoftDeletes   = false;
     protected $protectFields    = true;
 
     protected $allowedFields = [
-        'role_id',
+        'rol_id',
         'email',
         'password',
-        'nombre',
-        'apellido',
-        'telefono',
-        'direccion',
-        'documento_tipo',
-        'documento_numero',
-        'foto',
-        'activo',
-        'email_verified_at',
-        'remember_token',
-        'last_login',
-        'created_by',
-        'updated_by'
+        'estado',
+        'email_verificado',
+        'token_verificacion',
+        'token_recuperacion',
+        'token_expira',
+        'ultimo_acceso'
     ];
 
     // Dates
@@ -37,18 +30,12 @@ class UserModel extends Model
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
-    protected $deletedField  = 'deleted_at';
 
     // Validation
     protected $validationRules = [
-        'email'     => 'required|valid_email|is_unique[users.email,id,{id}]',
-        'password'  => 'required|min_length[8]',
-        'nombre'    => 'required|min_length[2]|max_length[100]',
-        'apellido'  => 'required|min_length[2]|max_length[100]',
-        'role_id'   => 'required|integer|is_not_unique[roles.id]',
-        'telefono'  => 'permit_empty|max_length[20]',
-        'documento_tipo'   => 'permit_empty|in_list[CC,TI,CE,PP,RC]',
-        'documento_numero' => 'permit_empty|max_length[20]',
+        'email'    => 'required|valid_email|is_unique[usuarios.email,id,{id}]',
+        'password' => 'required|min_length[8]',
+        'rol_id'   => 'required|integer',
     ];
 
     protected $validationMessages = [
@@ -60,18 +47,6 @@ class UserModel extends Model
         'password' => [
             'required'   => 'La contraseña es obligatoria.',
             'min_length' => 'La contraseña debe tener al menos 8 caracteres.',
-        ],
-        'nombre' => [
-            'required'   => 'El nombre es obligatorio.',
-            'min_length' => 'El nombre debe tener al menos 2 caracteres.',
-        ],
-        'apellido' => [
-            'required'   => 'El apellido es obligatorio.',
-            'min_length' => 'El apellido debe tener al menos 2 caracteres.',
-        ],
-        'role_id' => [
-            'required'      => 'El rol es obligatorio.',
-            'is_not_unique' => 'El rol seleccionado no existe.',
         ],
     ];
 
@@ -106,24 +81,79 @@ class UserModel extends Model
     }
 
     /**
-     * Find user by email
+     * Find user by email (active users only)
      */
     public function findByEmail(string $email): ?array
     {
         return $this->where('email', $email)
-                    ->where('activo', 1)
+                    ->where('estado', 'activo')
                     ->first();
     }
 
     /**
-     * Get user with role info
+     * Get user with role info and profile data
      */
     public function getUserWithRole(int $id): ?array
     {
-        return $this->select('users.*, roles.nombre as rol_nombre, roles.slug as rol_slug')
-                    ->join('roles', 'roles.id = users.role_id')
-                    ->where('users.id', $id)
-                    ->first();
+        $user = $this->select('usuarios.*, roles.nombre as rol_nombre')
+                     ->join('roles', 'roles.id = usuarios.rol_id')
+                     ->where('usuarios.id', $id)
+                     ->first();
+
+        if (!$user) {
+            return null;
+        }
+
+        // Get profile data from the appropriate table based on role
+        $profileData = $this->getProfileData($id, $user['rol_nombre']);
+        if ($profileData) {
+            $user = array_merge($user, $profileData);
+        }
+
+        return $user;
+    }
+
+    /**
+     * Get profile data from role-specific table
+     */
+    public function getProfileData(int $userId, string $rolNombre): ?array
+    {
+        $db = \Config\Database::connect();
+
+        switch ($rolNombre) {
+            case 'admin':
+                $result = $db->table('administradores')
+                             ->where('usuario_id', $userId)
+                             ->get()
+                             ->getRowArray();
+                break;
+            case 'profesor':
+                $result = $db->table('profesores')
+                             ->where('usuario_id', $userId)
+                             ->get()
+                             ->getRowArray();
+                break;
+            case 'acudiente':
+                $result = $db->table('acudientes')
+                             ->where('usuario_id', $userId)
+                             ->get()
+                             ->getRowArray();
+                break;
+            default:
+                return null;
+        }
+
+        // Normalize field names (nombres -> nombre, apellidos -> apellido)
+        if ($result) {
+            if (isset($result['nombres']) && !isset($result['nombre'])) {
+                $result['nombre'] = $result['nombres'];
+            }
+            if (isset($result['apellidos']) && !isset($result['apellido'])) {
+                $result['apellido'] = $result['apellidos'];
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -132,19 +162,19 @@ class UserModel extends Model
     public function updateLastLogin(int $id): bool
     {
         return $this->update($id, [
-            'last_login' => date('Y-m-d H:i:s')
+            'ultimo_acceso' => date('Y-m-d H:i:s')
         ]);
     }
 
     /**
      * Get users by role
      */
-    public function getByRole(string $roleSlug): array
+    public function getByRole(string $rolNombre): array
     {
-        return $this->select('users.*')
-                    ->join('roles', 'roles.id = users.role_id')
-                    ->where('roles.slug', $roleSlug)
-                    ->where('users.activo', 1)
+        return $this->select('usuarios.*')
+                    ->join('roles', 'roles.id = usuarios.rol_id')
+                    ->where('roles.nombre', $rolNombre)
+                    ->where('usuarios.estado', 'activo')
                     ->findAll();
     }
 
@@ -156,12 +186,9 @@ class UserModel extends Model
         $token = bin2hex(random_bytes(32));
         $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
-        $db = \Config\Database::connect();
-        $db->table('password_resets')->insert([
-            'user_id'    => $userId,
-            'token'      => hash('sha256', $token),
-            'expires_at' => $expires,
-            'created_at' => date('Y-m-d H:i:s')
+        $this->update($userId, [
+            'token_recuperacion' => hash('sha256', $token),
+            'token_expira'       => $expires
         ]);
 
         return $token;
@@ -172,37 +199,65 @@ class UserModel extends Model
      */
     public function verifyResetToken(string $token): ?array
     {
-        $db = \Config\Database::connect();
-        $reset = $db->table('password_resets')
-                    ->where('token', hash('sha256', $token))
-                    ->where('expires_at >', date('Y-m-d H:i:s'))
-                    ->where('used_at', null)
-                    ->get()
-                    ->getRowArray();
+        return $this->where('token_recuperacion', hash('sha256', $token))
+                    ->where('token_expira >', date('Y-m-d H:i:s'))
+                    ->where('estado', 'activo')
+                    ->first();
+    }
 
-        if (!$reset) {
+    /**
+     * Clear reset token
+     */
+    public function clearResetToken(int $userId): bool
+    {
+        return $this->update($userId, [
+            'token_recuperacion' => null,
+            'token_expira'       => null
+        ]);
+    }
+
+    /**
+     * Create user with profile
+     */
+    public function createUserWithProfile(array $userData, array $profileData, string $rolNombre): ?int
+    {
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        // Create user
+        $this->insert($userData);
+        $userId = $this->getInsertID();
+
+        if (!$userId) {
+            $db->transRollback();
             return null;
         }
 
-        return $this->find($reset['user_id']);
+        // Create profile
+        $profileData['usuario_id'] = $userId;
+        $profileTable = match ($rolNombre) {
+            'admin'     => 'administradores',
+            'profesor'  => 'profesores',
+            'acudiente' => 'acudientes',
+            default     => null
+        };
+
+        if ($profileTable) {
+            $db->table($profileTable)->insert($profileData);
+        }
+
+        $db->transComplete();
+
+        return $db->transStatus() ? $userId : null;
     }
 
     /**
-     * Mark reset token as used
-     */
-    public function markTokenUsed(string $token): bool
-    {
-        $db = \Config\Database::connect();
-        return $db->table('password_resets')
-                  ->where('token', hash('sha256', $token))
-                  ->update(['used_at' => date('Y-m-d H:i:s')]);
-    }
-
-    /**
-     * Get full name
+     * Get full name from profile
      */
     public function getFullName(array $user): string
     {
-        return trim($user['nombre'] . ' ' . $user['apellido']);
+        $nombre = $user['nombre'] ?? '';
+        $apellido = $user['apellido'] ?? $user['apellidos'] ?? '';
+        return trim($nombre . ' ' . $apellido);
     }
 }

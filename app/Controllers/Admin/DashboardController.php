@@ -13,38 +13,68 @@ class DashboardController extends BaseController
     {
         $db = \Config\Database::connect();
 
-        // Get statistics
+        // Get statistics - using try/catch to handle missing tables gracefully
+        try {
+            $totalEstudiantes = $db->table('estudiantes')->where('estado', 'activo')->countAllResults();
+        } catch (\Exception $e) {
+            $totalEstudiantes = 0;
+        }
+
+        try {
+            $totalProfesores = $db->table('usuarios')
+                                  ->join('roles', 'roles.id = usuarios.rol_id')
+                                  ->where('roles.nombre', 'profesor')
+                                  ->where('usuarios.estado', 'activo')
+                                  ->countAllResults();
+        } catch (\Exception $e) {
+            $totalProfesores = 0;
+        }
+
+        try {
+            $totalGrupos = $db->table('grupos')->where('activo', 1)->countAllResults();
+        } catch (\Exception $e) {
+            $totalGrupos = 0;
+        }
+
+        try {
+            $pagosPendientes = $db->table('pagos')->where('estado', 'pendiente')->countAllResults();
+        } catch (\Exception $e) {
+            $pagosPendientes = 0;
+        }
+
         $stats = [
-            'total_estudiantes' => $db->table('students')->where('activo', 1)->countAllResults(),
-            'total_profesores'  => $db->table('users')
-                                      ->join('roles', 'roles.id = users.role_id')
-                                      ->where('roles.slug', 'profesor')
-                                      ->where('users.activo', 1)
-                                      ->countAllResults(),
-            'total_grupos'      => $db->table('groups')->where('activo', 1)->countAllResults(),
-            'pagos_pendientes'  => $db->table('payments')
-                                      ->where('estado', 'pendiente')
-                                      ->countAllResults(),
+            'total_estudiantes' => $totalEstudiantes,
+            'total_profesores'  => $totalProfesores,
+            'total_grupos'      => $totalGrupos,
+            'pagos_pendientes'  => $pagosPendientes,
         ];
 
         // Recent payments pending approval
-        $pagos_recientes = $db->table('payments')
-                              ->select('payments.*, students.nombre as estudiante_nombre, students.apellido as estudiante_apellido')
-                              ->join('students', 'students.id = payments.student_id')
-                              ->where('payments.estado', 'pendiente')
-                              ->orderBy('payments.created_at', 'DESC')
-                              ->limit(5)
-                              ->get()
-                              ->getResultArray();
+        try {
+            $pagos_recientes = $db->table('pagos')
+                                  ->select('pagos.*, estudiantes.nombres as estudiante_nombre, estudiantes.apellidos as estudiante_apellido')
+                                  ->join('estudiantes', 'estudiantes.id = pagos.estudiante_id')
+                                  ->where('pagos.estado', 'pendiente')
+                                  ->orderBy('pagos.created_at', 'DESC')
+                                  ->limit(5)
+                                  ->get()
+                                  ->getResultArray();
+        } catch (\Exception $e) {
+            $pagos_recientes = [];
+        }
 
         // Recent enrollments
-        $inscripciones_recientes = $db->table('enrollments')
-                                      ->select('enrollments.*, students.nombre, students.apellido')
-                                      ->join('students', 'students.id = enrollments.student_id')
-                                      ->orderBy('enrollments.created_at', 'DESC')
-                                      ->limit(5)
-                                      ->get()
-                                      ->getResultArray();
+        try {
+            $inscripciones_recientes = $db->table('inscripciones')
+                                          ->select('inscripciones.*, estudiantes.nombres, estudiantes.apellidos')
+                                          ->join('estudiantes', 'estudiantes.id = inscripciones.estudiante_id')
+                                          ->orderBy('inscripciones.created_at', 'DESC')
+                                          ->limit(5)
+                                          ->get()
+                                          ->getResultArray();
+        } catch (\Exception $e) {
+            $inscripciones_recientes = [];
+        }
 
         return view('admin/dashboard', [
             'title'     => 'Dashboard Admin - Academia Heroicos',

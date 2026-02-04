@@ -126,6 +126,9 @@ _modules/*
 # Deploy Scripts (Security)
 #-------------------------
 public/deploy.php
+public/sync_production.php
+public/migrate_production_sql.php
+public/fix_production_data.php
 .claude/
 
 /results/

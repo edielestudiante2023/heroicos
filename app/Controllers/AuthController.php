@@ -68,25 +68,24 @@ class AuthController extends BaseController
                            ->with('error', 'Credenciales inválidas.');
         }
 
-        // Check if user is active
-        if (!$user['activo']) {
+        // Check if user is active (estado = 'activo')
+        if ($user['estado'] !== 'activo') {
             return redirect()->back()
                            ->withInput()
                            ->with('error', 'Su cuenta está desactivada. Contacte al administrador.');
         }
 
-        // Get user with role info
+        // Get user with role info and profile data
         $userWithRole = $this->userModel->getUserWithRole($user['id']);
 
         // Set session data
         $sessionData = [
             'user_id'     => $user['id'],
             'email'       => $user['email'],
-            'nombre'      => $user['nombre'],
-            'apellido'    => $user['apellido'],
-            'role_id'     => $user['role_id'],
+            'nombre'      => $userWithRole['nombre'] ?? 'Usuario',
+            'apellido'    => $userWithRole['apellido'] ?? $userWithRole['apellidos'] ?? '',
+            'rol_id'      => $user['rol_id'],
             'rol_nombre'  => $userWithRole['rol_nombre'],
-            'rol_slug'    => $userWithRole['rol_slug'],
             'isLoggedIn'  => true,
         ];
         session()->set($sessionData);
@@ -103,7 +102,7 @@ class AuthController extends BaseController
         }
 
         // Redirect based on role
-        return $this->redirectByRole($userWithRole['rol_slug']);
+        return $this->redirectByRole($userWithRole['rol_nombre']);
     }
 
     /**
@@ -214,8 +213,8 @@ class AuthController extends BaseController
             'password' => $this->request->getPost('password')
         ]);
 
-        // Mark token as used
-        $this->userModel->markTokenUsed($token);
+        // Clear reset token
+        $this->userModel->clearResetToken($user['id']);
 
         return redirect()->to('/login')
                        ->with('message', 'Contraseña actualizada correctamente. Puede iniciar sesión.');
@@ -224,9 +223,9 @@ class AuthController extends BaseController
     /**
      * Redirect user based on role
      */
-    protected function redirectByRole(string $role): \CodeIgniter\HTTP\RedirectResponse
+    protected function redirectByRole(string $rolNombre): \CodeIgniter\HTTP\RedirectResponse
     {
-        switch ($role) {
+        switch ($rolNombre) {
             case RoleModel::ADMIN:
                 return redirect()->to('/admin/dashboard');
             case RoleModel::PROFESOR:
@@ -243,20 +242,25 @@ class AuthController extends BaseController
      */
     protected function logAuthAttempt(int $userId, bool $success): void
     {
-        $db = \Config\Database::connect();
-        $db->table('audit_log')->insert([
-            'user_id'    => $userId,
-            'accion'     => $success ? 'LOGIN_SUCCESS' : 'LOGIN_FAILED',
-            'tabla'      => 'users',
-            'registro_id'=> $userId,
-            'ip_address' => $this->request->getIPAddress(),
-            'user_agent' => $this->request->getUserAgent()->getAgentString(),
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
+        try {
+            $db = \Config\Database::connect();
+            $db->table('auditoria')->insert([
+                'usuario_id'  => $userId,
+                'accion'      => $success ? 'LOGIN_SUCCESS' : 'LOGIN_FAILED',
+                'tabla'       => 'usuarios',
+                'registro_id' => $userId,
+                'ip'          => $this->request->getIPAddress(),
+                'user_agent'  => $this->request->getUserAgent()->getAgentString(),
+                'created_at'  => date('Y-m-d H:i:s'),
+            ]);
+        } catch (\Exception $e) {
+            // Log error but don't break the login flow
+            log_message('error', 'Error logging auth attempt: ' . $e->getMessage());
+        }
     }
 
     /**
-     * Set remember me token
+     * Set remember me token (using token_recuperacion field)
      */
     protected function setRememberToken(int $userId): void
     {
@@ -265,7 +269,7 @@ class AuthController extends BaseController
 
         // Store in database
         $this->userModel->update($userId, [
-            'remember_token' => $hashedToken
+            'token_verificacion' => $hashedToken
         ]);
 
         // Set cookie for 30 days
@@ -280,9 +284,9 @@ class AuthController extends BaseController
         $hashedToken = hash('sha256', $token);
 
         $db = \Config\Database::connect();
-        $db->table('users')
-           ->where('remember_token', $hashedToken)
-           ->update(['remember_token' => null]);
+        $db->table('usuarios')
+           ->where('token_verificacion', $hashedToken)
+           ->update(['token_verificacion' => null]);
 
         delete_cookie('remember_token');
     }
