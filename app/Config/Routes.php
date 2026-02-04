@@ -45,8 +45,14 @@ $routes->group('admin', ['filter' => 'role:admin'], static function ($routes) {
     $routes->put('users/(:num)', 'Admin\UserController::update/$1');
     $routes->delete('users/(:num)', 'Admin\UserController::delete/$1');
 
-    // Students management (future)
-    // $routes->resource('students', ['controller' => 'Admin\StudentController']);
+    // Students management
+    $routes->get('students', 'Admin\StudentController::index');
+    $routes->get('students/new', 'Admin\StudentController::new');
+    $routes->post('students', 'Admin\StudentController::create');
+    $routes->get('students/(:num)', 'Admin\StudentController::show/$1');
+    $routes->get('students/(:num)/edit', 'Admin\StudentController::edit/$1');
+    $routes->put('students/(:num)', 'Admin\StudentController::update/$1');
+    $routes->delete('students/(:num)', 'Admin\StudentController::delete/$1');
 
     // Groups management (future)
     // $routes->resource('groups', ['controller' => 'Admin\GroupController']);
