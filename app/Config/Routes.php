@@ -54,8 +54,25 @@ $routes->group('admin', ['filter' => 'role:admin'], static function ($routes) {
     $routes->put('students/(:num)', 'Admin\StudentController::update/$1');
     $routes->delete('students/(:num)', 'Admin\StudentController::delete/$1');
 
-    // Groups management (future)
-    // $routes->resource('groups', ['controller' => 'Admin\GroupController']);
+    // Groups management
+    $routes->get('groups', 'Admin\GroupController::index');
+    $routes->get('groups/new', 'Admin\GroupController::new');
+    $routes->post('groups', 'Admin\GroupController::create');
+    $routes->get('groups/(:num)', 'Admin\GroupController::show/$1');
+    $routes->get('groups/(:num)/edit', 'Admin\GroupController::edit/$1');
+    $routes->put('groups/(:num)', 'Admin\GroupController::update/$1');
+    $routes->delete('groups/(:num)', 'Admin\GroupController::delete/$1');
+    $routes->post('groups/(:num)/enroll', 'Admin\GroupController::enrollStudent/$1');
+    $routes->post('groups/(:num)/unenroll/(:num)', 'Admin\GroupController::unenrollStudent/$1/$2');
+
+    // Schedules management
+    $routes->get('schedules', 'Admin\ScheduleController::index');
+    $routes->get('schedules/new', 'Admin\ScheduleController::new');
+    $routes->post('schedules', 'Admin\ScheduleController::create');
+    $routes->get('schedules/(:num)', 'Admin\ScheduleController::show/$1');
+    $routes->get('schedules/(:num)/edit', 'Admin\ScheduleController::edit/$1');
+    $routes->put('schedules/(:num)', 'Admin\ScheduleController::update/$1');
+    $routes->delete('schedules/(:num)', 'Admin\ScheduleController::delete/$1');
 
     // Payments management (future)
     // $routes->resource('payments', ['controller' => 'Admin\PaymentController']);

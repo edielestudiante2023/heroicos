@@ -12,15 +12,15 @@
     <i class="bi bi-people"></i>
     Usuarios
 </a>
-<a href="#" class="nav-link">
+<a href="<?= site_url('admin/students') ?>" class="nav-link">
     <i class="bi bi-person-badge"></i>
     Estudiantes
 </a>
-<a href="#" class="nav-link">
+<a href="<?= site_url('admin/groups') ?>" class="nav-link">
     <i class="bi bi-collection"></i>
     Grupos
 </a>
-<a href="#" class="nav-link">
+<a href="<?= site_url('admin/schedules') ?>" class="nav-link">
     <i class="bi bi-calendar3"></i>
     Horarios
 </a>
@@ -191,7 +191,7 @@
                             <tbody>
                                 <?php foreach ($inscripciones_recientes as $inscripcion): ?>
                                 <tr>
-                                    <td><?= esc($inscripcion['nombre'] . ' ' . $inscripcion['apellido']) ?></td>
+                                    <td><?= esc($inscripcion['nombres'] . ' ' . $inscripcion['apellidos']) ?></td>
                                     <td>
                                         <?php
                                         $badgeClass = match($inscripcion['estado']) {
@@ -224,17 +224,17 @@
             </div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="#" class="btn btn-primary">
+                    <a href="<?= site_url('admin/students/new') ?>" class="btn btn-primary">
                         <i class="bi bi-person-plus me-2"></i>Nuevo Estudiante
                     </a>
                     <a href="#" class="btn btn-success">
                         <i class="bi bi-cash-stack me-2"></i>Registrar Pago
                     </a>
-                    <a href="#" class="btn btn-info text-white">
+                    <a href="<?= site_url('admin/groups/new') ?>" class="btn btn-info text-white">
                         <i class="bi bi-collection me-2"></i>Nuevo Grupo
                     </a>
-                    <a href="#" class="btn btn-warning">
-                        <i class="bi bi-trophy me-2"></i>Crear Torneo
+                    <a href="<?= site_url('admin/schedules/new') ?>" class="btn btn-warning">
+                        <i class="bi bi-calendar3 me-2"></i>Nuevo Horario
                     </a>
                 </div>
             </div>

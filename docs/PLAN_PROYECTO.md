@@ -62,7 +62,23 @@ Digitalizar completamente la operación de la academia, con énfasis especial en
 | Iconos | Bootstrap Icons | Consistencia |
 | Cámara/Fotos | MediaDevices API | Nativo del navegador |
 
-### 2.3 Servicios Externos
+### 2.3 Paleta de Colores (UX Design)
+
+| Variable CSS | Color | Hex | Uso |
+|--------------|-------|-----|-----|
+| `--heroicos-primary` | Púrpura | `#b720d2` | **Principal** - Sidebar, botones primarios, encabezados |
+| `--heroicos-secondary` | Amarillo dorado | `#ffd65e` | **Protagonista** - Acentos, bordes activos, elementos destacados |
+| `--heroicos-dark` | Púrpura oscuro | `#8a189e` | Gradientes, hover states, variaciones oscuras |
+| `--heroicos-light` | Púrpura claro | `#f8e6fc` | Backgrounds alternativos, estados hover suaves |
+| `--heroicos-accent` | Rojo | `#d62b23` | **Menos protagonismo** - Alertas de peligro, estados críticos |
+
+**Notas de diseño:**
+
+- Los colores púrpura y amarillo son los protagonistas principales del diseño
+- El rojo se usa con moderación para estados de error o alertas importantes
+- Diseño aprobado por UX Designer (Febrero 2026)
+
+### 2.4 Servicios Externos
 | Servicio | Uso | Estado |
 |----------|-----|--------|
 | SendGrid | Envío de emails | Pendiente configurar API |

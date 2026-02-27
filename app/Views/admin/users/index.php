@@ -12,15 +12,15 @@
     <i class="bi bi-people"></i>
     Usuarios
 </a>
-<a href="#" class="nav-link">
+<a href="<?= site_url('admin/students') ?>" class="nav-link">
     <i class="bi bi-person-badge"></i>
     Estudiantes
 </a>
-<a href="#" class="nav-link">
+<a href="<?= site_url('admin/groups') ?>" class="nav-link">
     <i class="bi bi-collection"></i>
     Grupos
 </a>
-<a href="#" class="nav-link">
+<a href="<?= site_url('admin/schedules') ?>" class="nav-link">
     <i class="bi bi-calendar3"></i>
     Horarios
 </a>

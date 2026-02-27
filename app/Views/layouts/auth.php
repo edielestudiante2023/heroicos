@@ -13,9 +13,10 @@
 
     <style>
         :root {
-            --heroicos-primary: #1a5f2a;
-            --heroicos-secondary: #ffc107;
-            --heroicos-dark: #0d3015;
+            --heroicos-primary: #b720d2;
+            --heroicos-secondary: #ffd65e;
+            --heroicos-dark: #8a189e;
+            --heroicos-accent: #d62b23;
         }
 
         body {
@@ -67,7 +68,7 @@
 
         .form-control:focus {
             border-color: var(--heroicos-primary);
-            box-shadow: 0 0 0 0.2rem rgba(26, 95, 42, 0.15);
+            box-shadow: 0 0 0 0.2rem rgba(183, 32, 210, 0.15);
         }
 
         .btn-primary {

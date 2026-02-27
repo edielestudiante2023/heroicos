@@ -31,7 +31,7 @@ class DashboardController extends BaseController
         }
 
         try {
-            $totalGrupos = $db->table('grupos')->where('activo', 1)->countAllResults();
+            $totalGrupos = $db->table('grupos')->where('estado', 'activo')->countAllResults();
         } catch (\Exception $e) {
             $totalGrupos = 0;
         }

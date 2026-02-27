@@ -13,10 +13,11 @@
 
     <style>
         :root {
-            --heroicos-primary: #1a5f2a;
-            --heroicos-secondary: #ffc107;
-            --heroicos-dark: #0d3015;
-            --heroicos-light: #e8f5e9;
+            --heroicos-primary: #b720d2;
+            --heroicos-secondary: #ffd65e;
+            --heroicos-dark: #8a189e;
+            --heroicos-light: #f8e6fc;
+            --heroicos-accent: #d62b23;
             --sidebar-width: 260px;
         }
 
@@ -168,10 +169,10 @@
             font-size: 1.5rem;
         }
 
-        .stat-card .icon.bg-primary { background: rgba(26, 95, 42, 0.15); color: var(--heroicos-primary); }
-        .stat-card .icon.bg-warning { background: rgba(255, 193, 7, 0.15); color: #d39e00; }
+        .stat-card .icon.bg-primary { background: rgba(183, 32, 210, 0.15); color: var(--heroicos-primary); }
+        .stat-card .icon.bg-warning { background: rgba(255, 214, 94, 0.15); color: #d4a800; }
         .stat-card .icon.bg-info { background: rgba(13, 202, 240, 0.15); color: #0dcaf0; }
-        .stat-card .icon.bg-danger { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+        .stat-card .icon.bg-danger { background: rgba(214, 43, 35, 0.15); color: var(--heroicos-accent); }
 
         .stat-card .value {
             font-size: 1.75rem;
