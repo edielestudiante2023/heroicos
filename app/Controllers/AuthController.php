@@ -297,13 +297,22 @@ class AuthController extends BaseController
      */
     protected function sendResetEmail(array $user, string $token): bool
     {
-        // TODO: Implement with SendGrid in Phase 8
-        // For now, just log the token for testing
-        log_message('info', "Password reset token for {$user['email']}: {$token}");
-
         $resetUrl = site_url("reset-password/{$token}");
-        log_message('info', "Reset URL: {$resetUrl}");
+        log_message('info', "Reset URL for {$user['email']}: {$resetUrl}");
 
-        return true;
+        try {
+            $sendgrid = new \App\Libraries\SendGridService();
+            return $sendgrid->enviar(
+                ['email' => $user['email'], 'nombre' => $user['nombre'] ?? ''],
+                'recuperar_password',
+                [
+                    'nombre' => $user['nombre'] ?? 'Usuario',
+                    'enlace' => $resetUrl,
+                ]
+            );
+        } catch (\Exception $e) {
+            log_message('error', 'Error enviando email de recuperación: ' . $e->getMessage());
+            return false;
+        }
     }
 }
