@@ -60,8 +60,8 @@ class CreatePlantillasEmail extends Migration
                 'codigo' => 'bienvenida',
                 'nombre' => 'Bienvenida al club',
                 'asunto' => 'Bienvenido a Academia Heroicos',
-                'cuerpo_html' => '<h1>¡Bienvenido a Academia Heroicos!</h1><p>Hola {{nombre_acudiente}},</p><p>Tu registro ha sido exitoso. Tus credenciales de acceso son:</p><p><strong>Usuario:</strong> {{email}}<br><strong>Contraseña:</strong> {{password_temporal}}</p><p>Te recomendamos cambiar tu contraseña en el primer inicio de sesión.</p><p>¡Nos vemos en la cancha!</p>',
-                'variables' => '["nombre_acudiente", "email", "password_temporal"]',
+                'cuerpo_html' => '<h1>¡Bienvenido a Academia Heroicos!</h1><p>Hola {{nombre}},</p><p>Tu registro ha sido exitoso. Tus credenciales de acceso son:</p><p><strong>Usuario:</strong> {{email}}<br><strong>Contraseña:</strong> {{password_temporal}}</p><p>Te recomendamos cambiar tu contraseña en el primer inicio de sesión.</p><p>¡Nos vemos en la cancha!</p>',
+                'variables' => '["nombre", "email", "password_temporal"]',
             ],
             [
                 'codigo' => 'nuevo_estudiante',

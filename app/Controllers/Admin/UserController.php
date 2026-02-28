@@ -445,7 +445,7 @@ class UserController extends BaseController
                 ['email' => $email, 'nombre' => $nombres],
                 'bienvenida',
                 [
-                    'nombre_acudiente' => $nombres,
+                    'nombre'           => $nombres,
                     'email'            => $email,
                     'password_temporal'=> $password,
                 ]

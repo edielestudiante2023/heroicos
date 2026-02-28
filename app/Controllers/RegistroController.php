@@ -201,7 +201,7 @@ class RegistroController extends BaseController
                 ['email' => $email, 'nombre' => $nombreCompleto],
                 'bienvenida',
                 [
-                    'nombre_acudiente'  => $nombreCompleto,
+                    'nombre'            => $nombreCompleto,
                     'email'             => $email,
                     'password_temporal' => $password,
                 ]
