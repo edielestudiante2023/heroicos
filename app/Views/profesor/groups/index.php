@@ -60,3 +60,19 @@
     </div>
 <?php endif; ?>
 <?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+(function() {
+    if (typeof HeroicosDB === 'undefined') return;
+    var profesorId = document.body.getAttribute('data-profesor-id');
+    if (!profesorId) return;
+
+    // Auto-prefetch when visiting groups page (ensures student data is fresh)
+    HeroicosDB.init().then(function(ok) {
+        if (!ok || !navigator.onLine || typeof HeroicosSync === 'undefined') return;
+        HeroicosSync.prefetchProfesorData();
+    });
+})();
+</script>
+<?= $this->endSection() ?>

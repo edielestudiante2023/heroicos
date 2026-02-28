@@ -249,6 +249,7 @@ class TournamentController extends BaseController
         }
 
         if ($inscripcionModel->enrollStudent($torneoId, (int)$estudianteId, (int)$acudienteId)) {
+            $this->notificarInscripcionTorneo($torneoId, (int)$estudianteId);
             return redirect()->back()->with('success', 'Estudiante inscrito exitosamente en el torneo');
         }
 
@@ -283,6 +284,110 @@ class TournamentController extends BaseController
 
         $this->torneoModel->update($id, ['estado' => $nuevoEstado]);
 
+        // Notificar a acudientes cuando se abren inscripciones
+        if ($nuevoEstado === 'inscripciones_abiertas') {
+            $torneo = $this->torneoModel->find($id);
+            $this->notificarTorneoDisponible($torneo);
+        }
+
         return redirect()->back()->with('success', 'Estado del torneo actualizado a: ' . str_replace('_', ' ', $nuevoEstado));
+    }
+
+    /**
+     * Notify relevant acudientes that a tournament is open for enrollment
+     */
+    protected function notificarTorneoDisponible(array $torneo): void
+    {
+        try {
+            $db = \Config\Database::connect();
+
+            if (!empty($torneo['categoria_id'])) {
+                $acudientes = $db->query("
+                    SELECT DISTINCT a.id, a.nombres, a.apellidos, u.email
+                    FROM estudiantes e
+                    JOIN inscripciones i ON i.estudiante_id = e.id AND i.estado = 'activa'
+                    JOIN grupos g ON g.id = i.grupo_id
+                    JOIN acudientes a ON a.id = e.acudiente_id
+                    JOIN usuarios u ON u.id = a.usuario_id
+                    WHERE e.estado = 'activo'
+                    AND g.categoria_id = ?
+                    AND u.estado = 'activo'
+                ", [$torneo['categoria_id']])->getResultArray();
+            } else {
+                $acudientes = $db->query("
+                    SELECT DISTINCT a.id, a.nombres, a.apellidos, u.email
+                    FROM estudiantes e
+                    JOIN acudientes a ON a.id = e.acudiente_id
+                    JOIN usuarios u ON u.id = a.usuario_id
+                    WHERE e.estado = 'activo'
+                    AND u.estado = 'activo'
+                ")->getResultArray();
+            }
+
+            if (empty($acudientes)) return;
+
+            $inscritos = $db->table('torneo_inscripciones')
+                ->where('torneo_id', $torneo['id'])
+                ->where('estado', 'inscrito')
+                ->countAllResults();
+            $cupos = (int)$torneo['cupo_maximo'] - $inscritos;
+
+            $sendgrid = new \App\Libraries\SendGridService();
+
+            foreach ($acudientes as $acudiente) {
+                $sendgrid->enviar(
+                    ['email' => $acudiente['email'], 'nombre' => $acudiente['nombres']],
+                    'torneo_disponible',
+                    [
+                        'nombre_acudiente' => $acudiente['nombres'] . ' ' . $acudiente['apellidos'],
+                        'nombre_torneo'    => $torneo['nombre'],
+                        'fecha_torneo'     => date('d/m/Y', strtotime($torneo['fecha_evento'])),
+                        'lugar'            => $torneo['lugar'] ?? 'Por confirmar',
+                        'costo'            => number_format($torneo['costo'], 0, ',', '.'),
+                        'cupos'            => (string)$cupos,
+                    ]
+                );
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Error enviando email torneo_disponible: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notify acudiente that their student was enrolled in a tournament
+     */
+    protected function notificarInscripcionTorneo(int $torneoId, int $estudianteId): void
+    {
+        try {
+            $db = \Config\Database::connect();
+
+            $torneo = $this->torneoModel->find($torneoId);
+            if (!$torneo) return;
+
+            $estudiante = $db->table('estudiantes e')
+                ->select('e.nombres, e.apellidos, a.nombres as acud_nombres, a.apellidos as acud_apellidos, u.email')
+                ->join('acudientes a', 'a.id = e.acudiente_id')
+                ->join('usuarios u', 'u.id = a.usuario_id')
+                ->where('e.id', $estudianteId)
+                ->get()->getRowArray();
+
+            if (!$estudiante) return;
+
+            $sendgrid = new \App\Libraries\SendGridService();
+            $sendgrid->enviar(
+                ['email' => $estudiante['email'], 'nombre' => $estudiante['acud_nombres']],
+                'inscripcion_torneo_confirmada',
+                [
+                    'nombre_acudiente'  => $estudiante['acud_nombres'] . ' ' . $estudiante['acud_apellidos'],
+                    'nombre_estudiante' => $estudiante['nombres'] . ' ' . $estudiante['apellidos'],
+                    'nombre_torneo'     => $torneo['nombre'],
+                    'fecha_torneo'      => date('d/m/Y', strtotime($torneo['fecha_evento'])),
+                    'lugar'             => $torneo['lugar'] ?? 'Por confirmar',
+                    'costo'             => number_format($torneo['costo'], 0, ',', '.'),
+                ]
+            );
+        } catch (\Exception $e) {
+            log_message('error', 'Error enviando email inscripcion_torneo_confirmada: ' . $e->getMessage());
+        }
     }
 }

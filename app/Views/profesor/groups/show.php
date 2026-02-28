@@ -99,3 +99,19 @@
     </div>
 </div>
 <?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+(function() {
+    if (typeof HeroicosDB === 'undefined') return;
+    var profesorId = document.body.getAttribute('data-profesor-id');
+    if (!profesorId || !navigator.onLine) return;
+
+    // Prefetch this group's students specifically for offline use
+    HeroicosDB.init().then(function(ok) {
+        if (!ok || typeof HeroicosSync === 'undefined') return;
+        HeroicosSync.prefetchProfesorData();
+    });
+})();
+</script>
+<?= $this->endSection() ?>

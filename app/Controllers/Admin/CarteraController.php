@@ -127,6 +127,85 @@ class CarteraController extends BaseController
     }
 
     /**
+     * Send payment reminders for overdue charges
+     */
+    public function enviarRecordatorios(): ResponseInterface
+    {
+        $db = \Config\Database::connect();
+
+        // Get overdue charges grouped by acudiente
+        $cargosVencidos = $db->query("
+            SELECT
+                c.id as cargo_id,
+                c.descripcion,
+                c.saldo_pendiente,
+                c.fecha_vencimiento,
+                e.id as estudiante_id,
+                e.nombres as est_nombres,
+                e.apellidos as est_apellidos,
+                a.id as acudiente_id,
+                a.nombres as acud_nombres,
+                a.apellidos as acud_apellidos,
+                u.email
+            FROM cargos c
+            JOIN estudiantes e ON e.id = c.estudiante_id
+            JOIN acudientes a ON a.id = e.acudiente_id
+            JOIN usuarios u ON u.id = a.usuario_id
+            WHERE c.fecha_vencimiento < CURDATE()
+            AND c.estado IN ('pendiente', 'parcial')
+            AND u.estado = 'activo'
+            ORDER BY a.id, c.fecha_vencimiento ASC
+        ")->getResultArray();
+
+        if (empty($cargosVencidos)) {
+            return redirect()->back()->with('message', 'No hay cargos vencidos para enviar recordatorios.');
+        }
+
+        // Group by acudiente
+        $porAcudiente = [];
+        foreach ($cargosVencidos as $cargo) {
+            $acudId = $cargo['acudiente_id'];
+            if (!isset($porAcudiente[$acudId])) {
+                $porAcudiente[$acudId] = [
+                    'email'    => $cargo['email'],
+                    'nombre'   => $cargo['acud_nombres'] . ' ' . $cargo['acud_apellidos'],
+                    'cargos'   => [],
+                ];
+            }
+            $porAcudiente[$acudId]['cargos'][] = $cargo;
+        }
+
+        $enviados = 0;
+        $sendgrid = new \App\Libraries\SendGridService();
+
+        foreach ($porAcudiente as $acudiente) {
+            // Use the first overdue charge for the template variables
+            $primerCargo = $acudiente['cargos'][0];
+            $totalPendiente = array_sum(array_column($acudiente['cargos'], 'saldo_pendiente'));
+
+            try {
+                $sendgrid->enviar(
+                    ['email' => $acudiente['email'], 'nombre' => $acudiente['nombre']],
+                    'recordatorio_pago',
+                    [
+                        'nombre_acudiente'  => $acudiente['nombre'],
+                        'valor_pendiente'   => number_format($totalPendiente, 0, ',', '.'),
+                        'estudiante'        => $primerCargo['est_nombres'] . ' ' . $primerCargo['est_apellidos'],
+                        'concepto'          => $primerCargo['descripcion'],
+                        'fecha_vencimiento' => date('d/m/Y', strtotime($primerCargo['fecha_vencimiento'])),
+                    ]
+                );
+                $enviados++;
+            } catch (\Exception $e) {
+                log_message('error', 'Error enviando recordatorio a ' . $acudiente['email'] . ': ' . $e->getMessage());
+            }
+        }
+
+        return redirect()->back()
+            ->with('success', "Se enviaron {$enviados} recordatorios de pago exitosamente.");
+    }
+
+    /**
      * Anular cargo
      */
     public function anularCargo(int $id): ResponseInterface

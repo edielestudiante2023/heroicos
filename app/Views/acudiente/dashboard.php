@@ -31,6 +31,12 @@
     Historial
 </a>
 
+<div class="nav-section">Documentos</div>
+<a href="<?= site_url('acudiente/paz-y-salvo') ?>" class="nav-link">
+    <i class="bi bi-file-earmark-check"></i>
+    Paz y Salvo
+</a>
+
 <div class="nav-section">Actividades</div>
 <a href="#" class="nav-link">
     <i class="bi bi-trophy"></i>
@@ -216,4 +222,67 @@
         </div>
     </div>
 </div>
+
+<!-- Offline Readiness Indicator -->
+<div class="mt-4" id="offlineStatus" style="display:none;">
+    <div class="card border-0" style="background: var(--heroicos-light, #f8e6fc); border-radius: 12px;">
+        <div class="card-body d-flex justify-content-between align-items-center py-2 px-3">
+            <div>
+                <span class="small" id="offlineStatusText">
+                    <i class="bi bi-cloud-check me-2" style="color: var(--heroicos-primary, #b720d2);"></i>Datos listos para uso sin conexion
+                </span>
+            </div>
+            <button class="btn btn-sm btn-outline-primary" id="btnPrefetch" onclick="triggerAcudientePrefetch()" style="font-size:.8rem;">
+                <i class="bi bi-arrow-repeat me-1"></i>Actualizar
+            </button>
+        </div>
+    </div>
+</div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+(function() {
+    if (typeof HeroicosDB === 'undefined') return;
+
+    var statusEl = document.getElementById('offlineStatus');
+    var textEl = document.getElementById('offlineStatusText');
+    var btnEl = document.getElementById('btnPrefetch');
+    var acudienteId = document.body.getAttribute('data-acudiente-id');
+
+    HeroicosDB.init().then(function(ok) {
+        if (!ok || !acudienteId) return;
+        return HeroicosDB.getCachedData('acudiente_dashboard_' + acudienteId);
+    }).then(function(cached) {
+        statusEl.style.display = 'block';
+        if (cached && cached.updatedAt) {
+            var mins = Math.round((Date.now() - cached.updatedAt) / 60000);
+            var label = mins < 1 ? 'hace menos de 1 min' :
+                        mins < 60 ? 'hace ' + mins + ' min' :
+                        'hace ' + Math.round(mins / 60) + ' h';
+            textEl.innerHTML = '<i class="bi bi-cloud-check me-2" style="color:var(--heroicos-primary,#b720d2)"></i>Datos offline listos (actualizado ' + label + ')';
+        } else {
+            textEl.innerHTML = '<i class="bi bi-cloud-arrow-down me-2 text-muted"></i>Prepara tus datos para usar sin conexion';
+            btnEl.innerHTML = '<i class="bi bi-download me-1"></i>Preparar offline';
+        }
+    });
+
+    window.triggerAcudientePrefetch = function() {
+        if (typeof HeroicosSync === 'undefined') return;
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Actualizando...';
+
+        HeroicosSync.prefetchAcudienteData().then(function(ok) {
+            btnEl.disabled = false;
+            btnEl.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Actualizar';
+            if (ok) {
+                textEl.innerHTML = '<i class="bi bi-cloud-check me-2" style="color:var(--heroicos-primary,#b720d2)"></i>Datos offline actualizados ahora';
+                if (typeof HeroicosOffline !== 'undefined') HeroicosOffline.showToast('Datos preparados para uso offline.', 'success');
+            } else {
+                textEl.innerHTML = '<i class="bi bi-exclamation-triangle me-2 text-warning"></i>No se pudieron actualizar los datos offline';
+            }
+        });
+    };
+})();
+</script>
 <?= $this->endSection() ?>

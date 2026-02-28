@@ -89,6 +89,17 @@ class AuthController extends BaseController
             'rol_nombre'  => $userWithRole['rol_nombre'],
             'isLoggedIn'  => true,
         ];
+
+        // Store role-specific profile ID for offline sync
+        $db = \Config\Database::connect();
+        if ($userWithRole['rol_nombre'] === 'profesor') {
+            $prof = $db->table('profesores')->where('usuario_id', $user['id'])->get()->getRowArray();
+            if ($prof) $sessionData['profesor_id'] = $prof['id'];
+        } elseif ($userWithRole['rol_nombre'] === 'acudiente') {
+            $acud = $db->table('acudientes')->where('usuario_id', $user['id'])->get()->getRowArray();
+            if ($acud) $sessionData['acudiente_id'] = $acud['id'];
+        }
+
         session()->set($sessionData);
 
         // Update last login

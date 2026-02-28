@@ -22,6 +22,10 @@ $routes->post('forgot-password', 'AuthController::sendResetLink');
 $routes->get('reset-password/(:segment)', 'AuthController::resetPassword/$1');
 $routes->post('reset-password', 'AuthController::updatePassword');
 
+// Public registration (no auth required)
+$routes->get('registro/(:segment)', 'RegistroController::index/$1');
+$routes->post('registro/(:segment)', 'RegistroController::store/$1');
+
 // ============================================================================
 // PROTECTED ROUTES (Authentication required)
 // ============================================================================
@@ -81,6 +85,7 @@ $routes->group('admin', ['filter' => 'role:admin'], static function ($routes) {
     $routes->get('cartera/estudiante/(:num)', 'Admin\CarteraController::estudiante/$1');
     $routes->post('cartera/generar-cargo', 'Admin\CarteraController::generarCargo');
     $routes->post('cartera/anular/(:num)', 'Admin\CarteraController::anularCargo/$1');
+    $routes->post('cartera/recordatorios', 'Admin\CarteraController::enviarRecordatorios');
 
     // Payments
     $routes->get('payments', 'Admin\PaymentController::index');
@@ -136,6 +141,10 @@ $routes->group('profesor', ['filter' => 'role:admin,profesor'], static function 
     // My groups
     $routes->get('groups', 'Profesor\GroupController::index');
     $routes->get('groups/(:num)', 'Profesor\GroupController::show/$1');
+
+    // Inscription links
+    $routes->get('inscripcion', 'Profesor\InscriptionController::index');
+    $routes->post('inscripcion/generar', 'Profesor\InscriptionController::generate');
 });
 
 // ============================================================================
@@ -144,6 +153,11 @@ $routes->group('profesor', ['filter' => 'role:admin,profesor'], static function 
 
 $routes->group('acudiente', ['filter' => 'role:admin,acudiente'], static function ($routes) {
     $routes->get('dashboard', 'Acudiente\DashboardController::index');
+
+    // Paz y Salvo
+    $routes->get('paz-y-salvo', 'Acudiente\PazYSalvoController::index');
+    $routes->post('paz-y-salvo/solicitar', 'Acudiente\PazYSalvoController::solicitar');
+    $routes->get('paz-y-salvo/descargar/(:num)', 'Acudiente\PazYSalvoController::descargar/$1');
 
     // My students (future)
     // $routes->get('students', 'Acudiente\StudentController::index');
@@ -156,10 +170,22 @@ $routes->group('acudiente', ['filter' => 'role:admin,acudiente'], static functio
 });
 
 // ============================================================================
-// API ROUTES (Future - for PWA)
+// OFFLINE API ROUTES (JSON endpoints for PWA sync)
 // ============================================================================
 
-// $routes->group('api', ['namespace' => 'App\Controllers\Api'], static function ($routes) {
-//     $routes->post('login', 'AuthController::login');
-//     // ... more API routes
-// });
+$routes->group('api/offline', ['filter' => 'apiauth'], static function ($routes) {
+    // Session check
+    $routes->get('session-check', 'Api\OfflineController::sessionCheck');
+
+    // Profesor: data prefetch
+    $routes->get('profesor/grupos', 'Api\OfflineController::profesorGrupos');
+    $routes->get('profesor/grupo/(:num)/estudiantes', 'Api\OfflineController::grupoEstudiantes/$1');
+
+    // Acudiente: data prefetch
+    $routes->get('acudiente/cargos', 'Api\OfflineController::acudienteCargos');
+    $routes->get('acudiente/dashboard', 'Api\OfflineController::acudienteDashboard');
+
+    // Offline sync (POST)
+    $routes->post('attendance', 'Api\OfflineController::syncAttendance');
+    $routes->post('payments', 'Api\OfflineController::syncPayment');
+});

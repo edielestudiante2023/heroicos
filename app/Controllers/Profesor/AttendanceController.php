@@ -127,6 +127,12 @@ class AttendanceController extends BaseController
         );
 
         if ($result) {
+            // Check for consecutive absences and send alerts
+            $ausentes = array_diff($estudianteIds, $presentes);
+            if (!empty($ausentes)) {
+                $this->verificarInasistenciasConsecutivas($ausentes, $grupoId);
+            }
+
             $totalPresentes = count($presentes);
             $totalEstudiantes = count($estudianteIds);
             return redirect()->to('profesor/groups/' . $grupoId)
@@ -134,6 +140,92 @@ class AttendanceController extends BaseController
         }
 
         return redirect()->back()->with('error', 'Error al registrar asistencia');
+    }
+
+    /**
+     * Check if absent students have 3+ consecutive absences and send alert
+     */
+    protected function verificarInasistenciasConsecutivas(array $estudianteIds, int $grupoId): void
+    {
+        try {
+            $db = \Config\Database::connect();
+
+            foreach ($estudianteIds as $estudianteId) {
+                // Count recent consecutive absences for this student in this group
+                $inasistencias = $db->query("
+                    SELECT a.id, sc.fecha
+                    FROM asistencias a
+                    JOIN sesiones_clase sc ON sc.id = a.sesion_id
+                    WHERE a.estudiante_id = ?
+                    AND sc.grupo_id = ?
+                    AND a.presente = 0
+                    ORDER BY sc.fecha DESC
+                    LIMIT 10
+                ", [$estudianteId, $grupoId])->getResultArray();
+
+                if (count($inasistencias) < 3) continue;
+
+                // Verify they are truly consecutive (no attendance in between)
+                $ultimasSesiones = $db->query("
+                    SELECT a.presente, sc.fecha
+                    FROM asistencias a
+                    JOIN sesiones_clase sc ON sc.id = a.sesion_id
+                    WHERE a.estudiante_id = ?
+                    AND sc.grupo_id = ?
+                    ORDER BY sc.fecha DESC
+                    LIMIT 5
+                ", [$estudianteId, $grupoId])->getResultArray();
+
+                $consecutivas = 0;
+                $fechasInasistencia = [];
+                foreach ($ultimasSesiones as $sesion) {
+                    if (!$sesion['presente']) {
+                        $consecutivas++;
+                        $fechasInasistencia[] = date('d/m/Y', strtotime($sesion['fecha']));
+                    } else {
+                        break;
+                    }
+                }
+
+                if ($consecutivas < 3) continue;
+
+                // Check if alert was already sent in last 7 days
+                $alertaReciente = $db->table('emails_enviados')
+                    ->where('plantilla', 'alerta_inasistencia')
+                    ->like('cuerpo', "estudiante_id={$estudianteId}")
+                    ->where('created_at >', date('Y-m-d H:i:s', strtotime('-7 days')))
+                    ->countAllResults();
+
+                if ($alertaReciente > 0) continue;
+
+                // Get student + acudiente info
+                $estudiante = $db->table('estudiantes e')
+                    ->select('e.nombres, e.apellidos, a.nombres as acud_nombres, a.apellidos as acud_apellidos, u.email')
+                    ->join('acudientes a', 'a.id = e.acudiente_id')
+                    ->join('usuarios u', 'u.id = a.usuario_id')
+                    ->where('e.id', $estudianteId)
+                    ->get()->getRowArray();
+
+                if (!$estudiante) continue;
+
+                $sendgrid = new \App\Libraries\SendGridService();
+                $sendgrid->enviar(
+                    ['email' => $estudiante['email'], 'nombre' => $estudiante['acud_nombres']],
+                    'alerta_inasistencia',
+                    [
+                        'nombre_acudiente'       => $estudiante['acud_nombres'] . ' ' . $estudiante['acud_apellidos'],
+                        'nombre_estudiante'      => $estudiante['nombres'] . ' ' . $estudiante['apellidos'],
+                        'cantidad_inasistencias' => (string)$consecutivas,
+                        'fechas'                 => implode('<br>', $fechasInasistencia),
+                    ]
+                );
+
+                // Log with student ID marker for de-duplication
+                log_message('info', "Alerta inasistencia enviada: estudiante_id={$estudianteId}, consecutivas={$consecutivas}");
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Error verificando inasistencias: ' . $e->getMessage());
+        }
     }
 
     /**

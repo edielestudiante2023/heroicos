@@ -29,7 +29,8 @@
 </div>
 <?php endif; ?>
 
-<form action="<?= site_url('admin/payments') ?>" method="post" enctype="multipart/form-data">
+<form id="paymentForm" action="<?= site_url('admin/payments') ?>" method="post" enctype="multipart/form-data"
+      data-offline-capable="true">
     <?= csrf_field() ?>
 
     <div class="row">
@@ -214,5 +215,94 @@ function updateTotal() {
     totalPagar.textContent = '$' + parseInt(total).toLocaleString('es-CO');
     btnSubmit.disabled = total <= 0;
 }
+
+// =========================================================================
+// OFFLINE PAYMENT SUPPORT
+// =========================================================================
+(function() {
+    var form = document.getElementById('paymentForm');
+    if (!form || typeof HeroicosSync === 'undefined') return;
+
+    form.addEventListener('submit', function(e) {
+        // If online, let normal form POST proceed
+        if (navigator.onLine) return;
+
+        e.preventDefault();
+        savePaymentOffline();
+    });
+
+    function savePaymentOffline() {
+        var acudienteId = parseInt(form.querySelector('[name="acudiente_id"]').value);
+        if (!acudienteId) {
+            if (typeof HeroicosOffline !== 'undefined') HeroicosOffline.showToast('Seleccione un acudiente.', 'warning');
+            return;
+        }
+
+        var fechaPago = form.querySelector('[name="fecha_pago"]').value;
+        var metodoPago = form.querySelector('[name="metodo_pago"]').value;
+        var banco = form.querySelector('[name="banco"]').value;
+        var referencia = form.querySelector('[name="referencia_banco"]').value;
+        var observaciones = form.querySelector('[name="observaciones"]').value;
+
+        // Collect selected cargos
+        var cargos = [];
+        var valorTotal = 0;
+        form.querySelectorAll('.cargo-check:checked').forEach(function(cb) {
+            var tr = cb.closest('tr');
+            var input = tr.querySelector('.valor-pago');
+            var val = parseFloat(input.value) || 0;
+            cargos.push({
+                cargo_id: parseInt(cb.value),
+                valor_aplicado: val,
+                descripcion: tr.querySelector('td:nth-child(3)') ? tr.querySelector('td:nth-child(3)').textContent.trim() : ''
+            });
+            valorTotal += val;
+        });
+
+        if (cargos.length === 0) {
+            if (typeof HeroicosOffline !== 'undefined') HeroicosOffline.showToast('Seleccione al menos un cargo.', 'warning');
+            return;
+        }
+
+        // Get acudiente name from select option
+        var selectEl = form.querySelector('[name="acudiente_id"]');
+        var acudienteNombre = selectEl.options[selectEl.selectedIndex].text;
+
+        var data = {
+            acudiente_id: acudienteId,
+            acudiente_nombre: acudienteNombre,
+            fecha_pago: fechaPago,
+            metodo_pago: metodoPago,
+            banco: banco,
+            referencia_banco: referencia,
+            observaciones: observaciones,
+            valor_total: valorTotal,
+            cargos: cargos
+        };
+
+        // Get comprobante file
+        var fileInput = form.querySelector('[name="comprobante"]');
+        var file = fileInput && fileInput.files.length > 0 ? fileInput.files[0] : null;
+
+        HeroicosSync.savePaymentOffline(data, file).then(function(id) {
+            if (typeof HeroicosOffline !== 'undefined') {
+                HeroicosOffline.showToast(
+                    'Pago guardado localmente ($' + Math.round(valorTotal).toLocaleString() + '). Se sincronizara al recuperar conexion.',
+                    'success'
+                );
+                HeroicosOffline.updatePendingBadge();
+            }
+            // Reset form
+            form.reset();
+            cargosPlaceholder.classList.remove('d-none');
+            cargosTable.classList.add('d-none');
+            btnSubmit.disabled = true;
+        }).catch(function(err) {
+            if (typeof HeroicosOffline !== 'undefined') {
+                HeroicosOffline.showToast('Error al guardar pago: ' + err.message, 'danger');
+            }
+        });
+    }
+})();
 </script>
 <?= $this->endSection() ?>

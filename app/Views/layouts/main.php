@@ -273,7 +273,15 @@
     </style>
     <?= $this->renderSection('styles') ?>
 </head>
-<body>
+<body
+    data-user-id="<?= esc(session()->get('user_id')) ?>"
+    data-user-email="<?= esc(session()->get('email')) ?>"
+    data-user-nombre="<?= esc(session()->get('nombre')) ?>"
+    data-user-apellido="<?= esc(session()->get('apellido')) ?>"
+    data-user-rol="<?= esc(session()->get('rol_nombre')) ?>"
+    data-profesor-id="<?= esc(session()->get('profesor_id') ?? '') ?>"
+    data-acudiente-id="<?= esc(session()->get('acudiente_id') ?? '') ?>"
+>
     <!-- Sidebar Overlay (Mobile) -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -488,6 +496,11 @@
         });
     })();
     </script>
+
+    <!-- Offline Support -->
+    <script src="<?= base_url('assets/js/heroicos-db.js') ?>"></script>
+    <script src="<?= base_url('assets/js/heroicos-sync.js') ?>"></script>
+    <script src="<?= base_url('assets/js/heroicos-offline.js') ?>"></script>
 
     <?= $this->renderSection('scripts') ?>
 </body>

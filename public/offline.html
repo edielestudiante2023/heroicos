@@ -4,141 +4,687 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#b720d2">
-    <title>Sin Conexión - Academia Heroicos</title>
+    <title>Sin Conexion - Academia Heroicos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --heroicos-primary: #b720d2;
+            --heroicos-dark: #8a189e;
+            --heroicos-light: #f8e6fc;
+            --heroicos-secondary: #ffd65e;
         }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f5f7fa; min-height: 100vh; }
 
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #b720d2 0%, #8a189e 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            padding: 1rem;
+        /* Loading / fallback screen */
+        .offline-splash {
+            background: linear-gradient(135deg, var(--heroicos-primary) 0%, var(--heroicos-dark) 100%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            color: white; padding: 1rem; text-align: center;
         }
+        .offline-splash .logo { width: 90px; height: 90px; border-radius: 50%; background: white;
+            margin: 0 auto 1.5rem; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2); overflow: hidden; }
+        .offline-splash .logo img { width: 80px; height: 80px; object-fit: contain; }
+        .retry-btn { background: white; color: var(--heroicos-primary); border: none;
+            padding: .75rem 2rem; border-radius: 50px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-decoration: none; display: inline-block; }
+        @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+        .pulse { animation: pulse 2s ease-in-out infinite; }
 
-        .offline-container {
-            text-align: center;
-            max-width: 400px;
-            width: 100%;
-        }
-
-        .offline-logo {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: white;
-            margin: 0 auto 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-
-        .offline-logo img {
-            width: 85px;
-            height: 85px;
-            object-fit: contain;
-        }
-
-        .wifi-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
-            opacity: 0.9;
-        }
-
-        .wifi-icon svg {
-            width: 100%;
-            height: 100%;
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        p {
-            font-size: 1rem;
-            opacity: 0.9;
-            margin-bottom: 2rem;
-            line-height: 1.5;
-        }
-
-        .retry-btn {
-            display: inline-block;
-            background: white;
-            color: #b720d2;
-            border: none;
-            padding: 0.875rem 2.5rem;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            text-decoration: none;
-        }
-
-        .retry-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-
-        .retry-btn:active {
-            transform: translateY(0);
-        }
-
-        .footer-text {
-            margin-top: 3rem;
-            font-size: 0.8rem;
-            opacity: 0.6;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-
-        .pulse {
-            animation: pulse 2s ease-in-out infinite;
-        }
+        /* App shell styles */
+        .app-shell { display: none; }
+        .app-header { background: linear-gradient(135deg, var(--heroicos-primary), var(--heroicos-dark));
+            color: white; padding: 1rem 1.5rem; }
+        .app-header h5 { margin: 0; }
+        .offline-badge { background: var(--heroicos-secondary); color: #333; padding: .2rem .6rem;
+            border-radius: 20px; font-size: .75rem; font-weight: 600; }
+        .grupo-card { background: white; border-radius: 12px; padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08); cursor: pointer; transition: transform .15s, box-shadow .15s;
+            border-left: 4px solid var(--heroicos-primary); }
+        .grupo-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+        .check-lg { width: 1.5em; height: 1.5em; }
+        .pending-card { background: var(--heroicos-light); border-radius: 12px; padding: 1rem; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .toast-container { z-index: 11000; }
     </style>
 </head>
 <body>
-    <div class="offline-container">
-        <div class="offline-logo">
-            <img src="/assets/images/heroicos.png" alt="Heroicos" onerror="this.parentElement.innerHTML='<div style=\'font-size:2.5rem;color:#b720d2;font-weight:800\'>H</div>'">
+    <!-- SCREEN 0: Loading / Fallback "Sin conexion" -->
+    <div id="splashScreen" class="offline-splash">
+        <div style="max-width:400px;width:100%;">
+            <div class="logo">
+                <img src="/assets/images/heroicos.png" alt="Heroicos"
+                     onerror="this.parentElement.innerHTML='<div style=font-size:2.5rem;color:#b720d2;font-weight:800>H</div>'">
+            </div>
+            <div class="pulse mb-3" style="font-size:3rem;"><i class="bi bi-wifi-off"></i></div>
+            <h4>Sin conexion a Internet</h4>
+            <p class="opacity-75" id="splashMsg">Verificando datos locales...</p>
+            <button class="retry-btn" onclick="location.reload()">Reintentar</button>
+            <p class="mt-4 opacity-50" style="font-size:.8rem;">&copy; 2026 Academia Heroicos</p>
         </div>
-
-        <div class="wifi-icon pulse">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="1" y1="1" x2="23" y2="23"></line>
-                <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
-                <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
-                <path d="M10.71 5.05A16 16 0 0 1 22.56 9"></path>
-                <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
-                <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-                <line x1="12" y1="20" x2="12.01" y2="20"></line>
-            </svg>
-        </div>
-
-        <h1>Sin conexión a Internet</h1>
-        <p>No se puede conectar con el servidor de Academia Heroicos. Verifica tu conexión a Internet e inténtalo de nuevo.</p>
-
-        <button class="retry-btn" onclick="window.location.reload()">
-            Reintentar
-        </button>
-
-        <p class="footer-text">&copy; 2026 Academia Heroicos - Escuela de Fútbol</p>
     </div>
+
+    <!-- SCREEN 1: App Shell (profesor) -->
+    <div id="appShell" class="app-shell">
+        <div class="app-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <img src="/assets/images/heroicos.png" alt="" style="width:36px;height:36px;border-radius:50%;background:white;object-fit:contain;"
+                     onerror="this.style.display='none'">
+                <h5 id="headerTitle">Academia Heroicos</h5>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="offline-badge"><i class="bi bi-wifi-off me-1"></i>Offline</span>
+                <span class="offline-badge" id="pendingBadge" style="display:none;">
+                    <i class="bi bi-cloud-arrow-up me-1"></i><span id="pendingCount">0</span> pendientes
+                </span>
+            </div>
+        </div>
+
+        <div class="container-fluid py-3 px-3 px-md-4">
+            <!-- Alert: online detected -->
+            <div id="onlineAlert" class="alert alert-success d-none mb-3">
+                <i class="bi bi-wifi me-2"></i>Conexion detectada.
+                <a href="/" class="alert-link">Ir al sistema completo</a>
+            </div>
+
+            <!-- SCREEN: Grupos list -->
+            <div id="screenGrupos" class="screen active">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h5 class="mb-0"><i class="bi bi-collection me-2"></i>Mis Grupos</h5>
+                        <small class="text-muted">Modo offline - datos cacheados</small>
+                    </div>
+                </div>
+                <div id="gruposList" class="row g-3"></div>
+                <div id="pendingSection" class="mt-4" style="display:none;">
+                    <h6 class="text-muted mb-2"><i class="bi bi-clock-history me-1"></i>Asistencias pendientes de sincronizar</h6>
+                    <div id="pendingList"></div>
+                </div>
+            </div>
+
+            <!-- SCREEN: Take Attendance -->
+            <div id="screenAttendance" class="screen">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb mb-1">
+                                <li class="breadcrumb-item"><a href="#" onclick="showScreen('screenGrupos');return false;">Mis Grupos</a></li>
+                                <li class="breadcrumb-item active">Tomar Asistencia</li>
+                            </ol>
+                        </nav>
+                        <h5 class="mb-0" id="attGrupoName">Tomar Asistencia</h5>
+                    </div>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="showScreen('screenGrupos')">
+                        <i class="bi bi-arrow-left me-1"></i>Volver
+                    </button>
+                </div>
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-people me-2"></i>Estudiantes (<span id="attStudentCount">0</span>)</span>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-success" onclick="setAllChecks(true)">
+                                        <i class="bi bi-check-all me-1"></i>Todos Presente
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="setAllChecks(false)">
+                                        <i class="bi bi-x-lg me-1"></i>Todos Ausente
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr><th style="width:50px">Presente</th><th>Estudiante</th></tr>
+                                        </thead>
+                                        <tbody id="attStudentList"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card mb-3">
+                            <div class="card-header bg-white"><i class="bi bi-gear me-2"></i>Detalles</div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="attFecha">
+                                </div>
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label">Hora Inicio</label>
+                                        <input type="time" class="form-control" id="attHoraInicio">
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label">Hora Fin</label>
+                                        <input type="time" class="form-control" id="attHoraFin">
+                                    </div>
+                                </div>
+                                <div class="mb-0">
+                                    <label class="form-label">Observaciones</label>
+                                    <textarea class="form-control" id="attObs" rows="2" placeholder="Notas..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-grid">
+                            <button class="btn btn-success btn-lg" id="btnSaveAttendance" onclick="saveAttendance()">
+                                <i class="bi bi-check-lg me-2"></i>Guardar Asistencia
+                            </button>
+                        </div>
+                        <div class="text-center mt-2">
+                            <span class="text-success fw-bold" id="attPresentes">0</span> presentes /
+                            <span class="text-danger fw-bold" id="attAusentes">0</span> ausentes
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN: Acudiente cached data -->
+            <div id="screenAcudiente" class="screen">
+                <h5 class="mb-3"><i class="bi bi-person-badge me-2"></i>Mi Resumen</h5>
+                <small class="text-muted d-block mb-3">Datos cacheados - Modo offline</small>
+                <div id="acudienteData"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/heroicos-db.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        var DB_NAME = 'heroicos_offline';
+        var DB_VERSION = 1;
+        var currentGrupo = null;
+        var currentEstudiantes = [];
+        var session = null;
+
+        // =====================================================================
+        // INITIALIZATION
+        // =====================================================================
+
+        init();
+
+        function init() {
+            // Listen for online event
+            window.addEventListener('online', function() {
+                var alert = document.getElementById('onlineAlert');
+                if (alert) alert.classList.remove('d-none');
+            });
+
+            // Try to use HeroicosDB if available, otherwise open DB directly
+            var dbPromise;
+            if (typeof HeroicosDB !== 'undefined') {
+                dbPromise = HeroicosDB.init().then(function(ok) {
+                    if (!ok) throw new Error('DB init failed');
+                    return true;
+                });
+            } else {
+                dbPromise = Promise.reject(new Error('HeroicosDB not loaded'));
+            }
+
+            dbPromise.then(function() {
+                return HeroicosDB.getUserSession();
+            }).then(function(sess) {
+                if (!sess || !sess.rol_nombre) {
+                    showFallback('No hay datos de sesion almacenados.');
+                    return;
+                }
+                session = sess;
+
+                if (sess.rol_nombre === 'profesor') {
+                    return loadProfesorView(sess);
+                } else if (sess.rol_nombre === 'acudiente') {
+                    return loadAcudienteView(sess);
+                } else {
+                    showFallback('Rol no soportado en modo offline.');
+                }
+            }).catch(function(err) {
+                console.warn('[Offline] Error:', err.message);
+                showFallback('No se puede conectar con el servidor. Verifica tu conexion a Internet e intentalo de nuevo.');
+            });
+        }
+
+        function showFallback(msg) {
+            document.getElementById('splashMsg').textContent = msg;
+        }
+
+        function showAppShell() {
+            document.getElementById('splashScreen').style.display = 'none';
+            document.getElementById('appShell').style.display = 'block';
+        }
+
+        // =====================================================================
+        // SCREEN NAVIGATION
+        // =====================================================================
+
+        window.showScreen = function(screenId) {
+            document.querySelectorAll('.screen').forEach(function(s) {
+                s.classList.remove('active');
+            });
+            var target = document.getElementById(screenId);
+            if (target) target.classList.add('active');
+
+            // Update header title
+            var titles = {
+                screenGrupos: 'Mis Grupos',
+                screenAttendance: 'Tomar Asistencia',
+                screenAcudiente: 'Mi Resumen'
+            };
+            document.getElementById('headerTitle').textContent = titles[screenId] || 'Academia Heroicos';
+        };
+
+        // =====================================================================
+        // PROFESOR VIEW
+        // =====================================================================
+
+        function loadProfesorView(sess) {
+            var cacheKey = 'profesor_grupos_' + sess.profesor_id;
+
+            return HeroicosDB.getCachedData(cacheKey).then(function(cached) {
+                if (!cached || !cached.data || cached.data.length === 0) {
+                    showFallback('No hay datos de grupos cacheados. Abre la app con conexion primero para preparar el modo offline.');
+                    return;
+                }
+
+                showAppShell();
+                renderGrupos(cached.data, sess);
+                loadPendingItems();
+
+                // Show freshness
+                if (cached.updatedAt) {
+                    var mins = Math.round((Date.now() - cached.updatedAt) / 60000);
+                    var label = mins < 1 ? 'hace menos de 1 min' :
+                                mins < 60 ? 'hace ' + mins + ' min' :
+                                'hace ' + Math.round(mins / 60) + ' h';
+                    var info = document.createElement('small');
+                    info.className = 'text-muted d-block mb-3';
+                    info.innerHTML = '<i class="bi bi-clock me-1"></i>Datos actualizados ' + label;
+                    document.getElementById('screenGrupos').insertBefore(info, document.getElementById('gruposList'));
+                }
+            });
+        }
+
+        function renderGrupos(grupos, sess) {
+            var container = document.getElementById('gruposList');
+            container.innerHTML = '';
+
+            grupos.forEach(function(grupo) {
+                var col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4';
+                col.innerHTML =
+                    '<div class="grupo-card" onclick="openAttendance(' + grupo.id + ')">' +
+                    '  <h6 class="mb-1">' + escHtml(grupo.nombre) + '</h6>' +
+                    '  <span class="badge bg-secondary mb-2">' + escHtml(grupo.categoria || '') + '</span>' +
+                    '  <div class="d-flex justify-content-between align-items-center">' +
+                    '    <small class="text-muted">' + (grupo.inscritos || '?') + ' estudiantes</small>' +
+                    '    <span class="btn btn-sm btn-success"><i class="bi bi-check2-square me-1"></i>Asistencia</span>' +
+                    '  </div>' +
+                    '</div>';
+                container.appendChild(col);
+            });
+        }
+
+        // =====================================================================
+        // ATTENDANCE SCREEN
+        // =====================================================================
+
+        window.openAttendance = function(grupoId) {
+            var cacheKey = 'grupo_estudiantes_' + grupoId;
+
+            HeroicosDB.getCachedData(cacheKey).then(function(cached) {
+                if (!cached || !cached.data || cached.data.length === 0) {
+                    showToast('No hay datos de estudiantes cacheados para este grupo.', 'warning');
+                    return;
+                }
+
+                // Find grupo name from grupos cache
+                var gruposKey = 'profesor_grupos_' + session.profesor_id;
+                return HeroicosDB.getCachedData(gruposKey).then(function(gruposCache) {
+                    var grupoNombre = 'Grupo ' + grupoId;
+                    if (gruposCache && gruposCache.data) {
+                        var g = gruposCache.data.find(function(x) { return x.id === grupoId; });
+                        if (g) grupoNombre = g.nombre;
+                    }
+
+                    currentGrupo = { id: grupoId, nombre: grupoNombre };
+                    currentEstudiantes = cached.data;
+
+                    renderAttendanceForm(cached.data, grupoNombre);
+                    showScreen('screenAttendance');
+                });
+            }).catch(function(err) {
+                showToast('Error cargando estudiantes: ' + err.message, 'danger');
+            });
+        };
+
+        function renderAttendanceForm(estudiantes, grupoNombre) {
+            document.getElementById('attGrupoName').textContent = 'Asistencia - ' + grupoNombre;
+            document.getElementById('attStudentCount').textContent = estudiantes.length;
+
+            // Set defaults
+            var now = new Date();
+            document.getElementById('attFecha').value = now.toISOString().slice(0, 10);
+            document.getElementById('attHoraInicio').value = padTime(now.getHours()) + ':' + padTime(now.getMinutes());
+            var fin = new Date(now.getTime() + 3600000);
+            document.getElementById('attHoraFin').value = padTime(fin.getHours()) + ':' + padTime(fin.getMinutes());
+            document.getElementById('attObs').value = '';
+
+            // Render student rows
+            var tbody = document.getElementById('attStudentList');
+            tbody.innerHTML = '';
+            estudiantes.forEach(function(est) {
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td class="text-center">' +
+                    '  <input class="form-check-input check-lg att-check" type="checkbox" ' +
+                    '         value="' + est.estudiante_id + '" checked>' +
+                    '</td>' +
+                    '<td><strong>' + escHtml(est.nombres + ' ' + est.apellidos) + '</strong></td>';
+                tbody.appendChild(tr);
+            });
+
+            // Attach change listeners for counts
+            document.querySelectorAll('.att-check').forEach(function(cb) {
+                cb.addEventListener('change', updateAttCounts);
+            });
+            updateAttCounts();
+        }
+
+        function updateAttCounts() {
+            var all = document.querySelectorAll('.att-check');
+            var checked = document.querySelectorAll('.att-check:checked');
+            document.getElementById('attPresentes').textContent = checked.length;
+            document.getElementById('attAusentes').textContent = all.length - checked.length;
+        }
+
+        window.setAllChecks = function(val) {
+            document.querySelectorAll('.att-check').forEach(function(cb) { cb.checked = val; });
+            updateAttCounts();
+        };
+
+        // =====================================================================
+        // SAVE ATTENDANCE
+        // =====================================================================
+
+        window.saveAttendance = function() {
+            if (!currentGrupo || !session) return;
+
+            var btn = document.getElementById('btnSaveAttendance');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+
+            var estudianteIds = [];
+            var presentes = [];
+            var estudianteNombres = {};
+
+            currentEstudiantes.forEach(function(est) {
+                estudianteIds.push(est.estudiante_id);
+                estudianteNombres[est.estudiante_id] = est.nombres + ' ' + est.apellidos;
+            });
+
+            document.querySelectorAll('.att-check:checked').forEach(function(cb) {
+                presentes.push(parseInt(cb.value));
+            });
+
+            var data = {
+                grupo_id: currentGrupo.id,
+                grupo_nombre: currentGrupo.nombre,
+                profesor_id: session.profesor_id,
+                fecha: document.getElementById('attFecha').value,
+                hora_inicio: document.getElementById('attHoraInicio').value,
+                hora_fin: document.getElementById('attHoraFin').value,
+                observaciones: document.getElementById('attObs').value,
+                estudiante_ids: estudianteIds,
+                presentes: presentes,
+                estudiante_nombres: estudianteNombres
+            };
+
+            // Check for duplicates
+            HeroicosDB.findInQueue('attendance', function(payload) {
+                return payload.grupo_id === data.grupo_id && payload.fecha === data.fecha;
+            }).then(function(existing) {
+                if (existing) {
+                    if (confirm('Ya guardaste asistencia para este grupo hoy. Deseas reemplazar?')) {
+                        return HeroicosDB.deleteQueueItem(existing.id).then(function() {
+                            return saveToQueue(data);
+                        });
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Guardar Asistencia';
+                    return;
+                }
+                return saveToQueue(data);
+            }).catch(function(err) {
+                showToast('Error: ' + err.message, 'danger');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Guardar Asistencia';
+            });
+        };
+
+        function saveToQueue(data) {
+            var meta = {
+                userId: session.user_id,
+                rolNombre: session.rol_nombre,
+                userName: session.nombre + ' ' + session.apellido,
+                deviceId: localStorage.getItem('heroicos-device-id') || 'unknown'
+            };
+
+            return HeroicosDB.addToQueue('attendance', data, meta).then(function(id) {
+                showToast(
+                    'Asistencia guardada localmente (' + data.presentes.length + '/' +
+                    data.estudiante_ids.length + ' presentes). Se sincronizara al recuperar conexion.',
+                    'success'
+                );
+
+                var btn = document.getElementById('btnSaveAttendance');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg me-2"></i>Guardar Asistencia';
+
+                // Go back to grupos and refresh pending
+                showScreen('screenGrupos');
+                loadPendingItems();
+                updatePendingBadgeCount();
+
+                // Try to register background sync
+                if ('serviceWorker' in navigator && 'SyncManager' in window) {
+                    navigator.serviceWorker.ready.then(function(reg) {
+                        reg.sync.register('heroicos-sync').catch(function() {});
+                    });
+                }
+            });
+        }
+
+        // =====================================================================
+        // PENDING ITEMS
+        // =====================================================================
+
+        function loadPendingItems() {
+            HeroicosDB.getQueueItems({ statusIn: ['pending', 'failed'] }).then(function(items) {
+                var section = document.getElementById('pendingSection');
+                var list = document.getElementById('pendingList');
+
+                if (items.length === 0) {
+                    section.style.display = 'none';
+                    return;
+                }
+
+                section.style.display = 'block';
+                list.innerHTML = '';
+
+                items.forEach(function(item) {
+                    var div = document.createElement('div');
+                    div.className = 'pending-card mb-2 d-flex justify-content-between align-items-center';
+
+                    var icon = item.type === 'attendance' ? 'bi-check2-square' : 'bi-credit-card';
+                    var statusBadge = item.status === 'failed'
+                        ? '<span class="badge bg-danger ms-2">Error</span>'
+                        : '<span class="badge bg-warning text-dark ms-2">Pendiente</span>';
+
+                    var label = item.type === 'attendance'
+                        ? 'Asistencia: ' + escHtml(item.payload.grupo_nombre || 'Grupo') + ' - ' + item.payload.fecha
+                        : 'Pago: $' + (item.payload.valor_total || 0).toLocaleString();
+
+                    div.innerHTML =
+                        '<div>' +
+                        '  <i class="bi ' + icon + ' me-2"></i>' +
+                        '  <strong>' + label + '</strong>' + statusBadge +
+                        '  <br><small class="text-muted">' +
+                             (item.payload.presentes ? item.payload.presentes.length + '/' + item.payload.estudiante_ids.length + ' presentes' : '') +
+                        '  </small>' +
+                        '</div>' +
+                        '<small class="text-muted">' + timeAgo(item.createdAt) + '</small>';
+
+                    list.appendChild(div);
+                });
+            });
+        }
+
+        function updatePendingBadgeCount() {
+            HeroicosDB.getPendingCount().then(function(count) {
+                var badge = document.getElementById('pendingBadge');
+                var countEl = document.getElementById('pendingCount');
+                if (badge) badge.style.display = count > 0 ? 'inline-block' : 'none';
+                if (countEl) countEl.textContent = count;
+            });
+        }
+
+        // =====================================================================
+        // ACUDIENTE VIEW
+        // =====================================================================
+
+        function loadAcudienteView(sess) {
+            var dashKey = 'acudiente_dashboard_' + sess.acudiente_id;
+            var cargosKey = 'acudiente_cargos_' + sess.acudiente_id;
+            var dashData = null;
+            var cargosData = null;
+            var freshest = null;
+
+            return HeroicosDB.getCachedData(dashKey).then(function(cached) {
+                if (cached && cached.data) {
+                    dashData = cached.data;
+                    freshest = cached;
+                }
+                return HeroicosDB.getCachedData(cargosKey);
+            }).then(function(cached) {
+                if (cached && cached.data) {
+                    cargosData = cached.data;
+                    if (!freshest || (cached.updatedAt > freshest.updatedAt)) freshest = cached;
+                }
+
+                if (!dashData && !cargosData) {
+                    showFallback('No hay datos cacheados. Abre la app con conexion primero.');
+                    return;
+                }
+
+                showAppShell();
+                showScreen('screenAcudiente');
+
+                var container = document.getElementById('acudienteData');
+                var html = '';
+
+                // Render dashboard summary (from /api/offline/acudiente/dashboard)
+                if (dashData) {
+                    html += '<div class="row g-3 mb-3">' +
+                        '<div class="col-6"><div class="card p-3 text-center">' +
+                        '  <div class="fs-4 fw-bold" style="color:var(--heroicos-primary)">' + (dashData.num_estudiantes || 0) + '</div>' +
+                        '  <small class="text-muted">Estudiantes</small>' +
+                        '</div></div>' +
+                        '<div class="col-6"><div class="card p-3 text-center">' +
+                        '  <div class="fs-4 fw-bold text-danger">$' + Math.round(dashData.total_pendiente || 0).toLocaleString() + '</div>' +
+                        '  <small class="text-muted">Saldo Pendiente</small>' +
+                        '</div></div></div>';
+
+                    if (dashData.pagos_pendientes > 0) {
+                        html += '<div class="alert alert-info py-2"><i class="bi bi-clock-history me-2"></i>' +
+                                dashData.pagos_pendientes + ' pago(s) en revision</div>';
+                    }
+                }
+
+                // Render cargos by student (from /api/offline/acudiente/cargos)
+                if (cargosData && cargosData.estudiantes) {
+                    cargosData.estudiantes.forEach(function(est) {
+                        if (!est.cargos || est.cargos.length === 0) return;
+                        html += '<h6 class="mt-3 mb-2"><i class="bi bi-person me-1"></i>' + escHtml(est.nombre) + '</h6>';
+                        html += '<div class="list-group mb-2">';
+                        est.cargos.forEach(function(c) {
+                            var vencido = c.fecha_vencimiento && new Date(c.fecha_vencimiento) < new Date();
+                            html += '<div class="list-group-item d-flex justify-content-between align-items-center">' +
+                                    '<div><strong>' + escHtml(c.descripcion || c.concepto_nombre || '') + '</strong>' +
+                                    (c.fecha_vencimiento ? '<br><small class="' + (vencido ? 'text-danger' : 'text-muted') + '">' +
+                                    (vencido ? 'Vencido: ' : 'Vence: ') + c.fecha_vencimiento + '</small>' : '') +
+                                    '</div>' +
+                                    '<span class="fw-bold text-danger">$' + Math.round(c.saldo_pendiente || 0).toLocaleString() + '</span>' +
+                                    '</div>';
+                        });
+                        html += '</div>';
+                    });
+                }
+
+                // Freshness indicator
+                if (freshest && freshest.updatedAt) {
+                    var mins = Math.round((Date.now() - freshest.updatedAt) / 60000);
+                    var label = mins < 1 ? 'hace menos de 1 min' : mins < 60 ? 'hace ' + mins + ' min' : 'hace ' + Math.round(mins / 60) + ' h';
+                    html += '<small class="text-muted d-block mt-3"><i class="bi bi-clock me-1"></i>Datos actualizados ' + label + '</small>';
+                }
+
+                container.innerHTML = html;
+            });
+        }
+
+        // =====================================================================
+        // UTILITIES
+        // =====================================================================
+
+        function escHtml(str) {
+            if (!str) return '';
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function padTime(n) { return n < 10 ? '0' + n : '' + n; }
+
+        function timeAgo(ts) {
+            var mins = Math.round((Date.now() - ts) / 60000);
+            if (mins < 1) return 'ahora';
+            if (mins < 60) return 'hace ' + mins + ' min';
+            var hrs = Math.round(mins / 60);
+            if (hrs < 24) return 'hace ' + hrs + ' h';
+            return 'hace ' + Math.round(hrs / 24) + ' d';
+        }
+
+        function showToast(message, type) {
+            var container = document.getElementById('toastContainer');
+            var bgClass = type === 'success' ? 'text-bg-success' :
+                          type === 'warning' ? 'text-bg-warning' :
+                          type === 'danger' ? 'text-bg-danger' : 'text-bg-primary';
+            var icon = type === 'success' ? 'bi-check-circle-fill' :
+                       type === 'warning' ? 'bi-exclamation-triangle-fill' :
+                       type === 'danger' ? 'bi-x-circle-fill' : 'bi-info-circle-fill';
+
+            var el = document.createElement('div');
+            el.className = 'toast align-items-center border-0 ' + bgClass;
+            el.setAttribute('role', 'alert');
+            el.innerHTML =
+                '<div class="d-flex"><div class="toast-body"><i class="bi ' + icon + ' me-2"></i>' +
+                message + '</div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
+
+            container.appendChild(el);
+            var toast = new bootstrap.Toast(el, { delay: 5000 });
+            toast.show();
+            el.addEventListener('hidden.bs.toast', function() { el.remove(); });
+        }
+    })();
+    </script>
 </body>
 </html>

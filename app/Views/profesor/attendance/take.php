@@ -37,7 +37,11 @@
         </div>
     </div>
 <?php else: ?>
-<form action="<?= site_url('profesor/attendance/save') ?>" method="post">
+<form id="attendanceForm" action="<?= site_url('profesor/attendance/save') ?>" method="post"
+      data-grupo-id="<?= $grupo['id'] ?>"
+      data-grupo-nombre="<?= esc($grupo['nombre']) ?>"
+      data-profesor-id="<?= $profesorId ?>"
+      data-offline-capable="true">
     <?= csrf_field() ?>
     <input type="hidden" name="grupo_id" value="<?= $grupo['id'] ?>">
     <input type="hidden" name="profesor_id" value="<?= $profesorId ?>">
@@ -154,5 +158,88 @@ document.getElementById('btnTodosAusente')?.addEventListener('click', () => {
     checks.forEach(cb => cb.checked = false);
     updateCount();
 });
+
+// =========================================================================
+// OFFLINE ATTENDANCE SUPPORT
+// =========================================================================
+(function() {
+    var form = document.getElementById('attendanceForm');
+    if (!form || typeof HeroicosSync === 'undefined') return;
+
+    form.addEventListener('submit', function(e) {
+        // If online, let the normal form POST proceed
+        if (navigator.onLine) return;
+
+        // Offline: prevent default and save locally
+        e.preventDefault();
+        saveAttendanceOffline();
+    });
+
+    function saveAttendanceOffline() {
+        var grupoId = parseInt(form.getAttribute('data-grupo-id'));
+        var grupoNombre = form.getAttribute('data-grupo-nombre');
+        var profesorId = parseInt(form.getAttribute('data-profesor-id'));
+
+        var fecha = form.querySelector('[name="fecha"]').value;
+        var horaInicio = form.querySelector('[name="hora_inicio"]').value;
+        var horaFin = form.querySelector('[name="hora_fin"]').value;
+        var observaciones = form.querySelector('[name="observaciones"]').value;
+
+        var estudianteIds = [];
+        var presentes = [];
+        var estudianteNombres = {};
+
+        form.querySelectorAll('[name="estudiante_ids[]"]').forEach(function(input) {
+            var id = parseInt(input.value);
+            estudianteIds.push(id);
+
+            // Get the student name from the table row
+            var row = input.closest('tr');
+            if (row) {
+                var nameCell = row.querySelector('td:last-child strong');
+                estudianteNombres[id] = nameCell ? nameCell.textContent.trim() : 'Estudiante ' + id;
+            }
+        });
+
+        form.querySelectorAll('[name="presentes[]"]:checked').forEach(function(input) {
+            presentes.push(parseInt(input.value));
+        });
+
+        var data = {
+            grupo_id: grupoId,
+            grupo_nombre: grupoNombre,
+            profesor_id: profesorId,
+            fecha: fecha,
+            hora_inicio: horaInicio,
+            hora_fin: horaFin,
+            observaciones: observaciones,
+            estudiante_ids: estudianteIds,
+            presentes: presentes,
+            estudiante_nombres: estudianteNombres
+        };
+
+        HeroicosSync.saveAttendanceOffline(data).then(function(result) {
+            if (result.duplicate) {
+                if (confirm('Ya guardaste asistencia para este grupo hoy. ¿Deseas reemplazar?')) {
+                    HeroicosSync.replaceAttendanceOffline(result.existingId, data).then(function() {
+                        HeroicosOffline.showToast(
+                            'Asistencia actualizada localmente. Se sincronizara cuando haya conexion.',
+                            'success'
+                        );
+                        HeroicosOffline.updatePendingBadge();
+                    });
+                }
+            } else {
+                HeroicosOffline.showToast(
+                    'Asistencia guardada localmente (' + presentes.length + '/' + estudianteIds.length + ' presentes). Se sincronizara cuando haya conexion.',
+                    'success'
+                );
+                HeroicosOffline.updatePendingBadge();
+            }
+        }).catch(function(err) {
+            HeroicosOffline.showToast('Error al guardar: ' + err.message, 'danger');
+        });
+    }
+})();
 </script>
 <?= $this->endSection() ?>

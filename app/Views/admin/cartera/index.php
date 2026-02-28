@@ -105,6 +105,13 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0">Cartera General</h4>
+            <form action="<?= site_url('admin/cartera/recordatorios') ?>" method="POST" class="d-inline">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-warning"
+                        onclick="return confirm('Se enviaran recordatorios a todos los acudientes con cargos vencidos. ¿Continuar?')">
+                    <i class="bi bi-envelope me-1"></i>Enviar Recordatorios
+                </button>
+            </form>
         </div>
 
         <!-- Filters -->

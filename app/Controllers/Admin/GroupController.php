@@ -263,7 +263,21 @@ class GroupController extends BaseController
             return redirect()->back()->with('error', 'El estudiante ya está inscrito en este grupo');
         }
 
+        // Check if student has active enrollment in another group (group change)
+        $db = \Config\Database::connect();
+        $inscripcionAnterior = $db->table('inscripciones i')
+            ->select('i.id, i.grupo_id, g.nombre as grupo_nombre')
+            ->join('grupos g', 'g.id = i.grupo_id')
+            ->where('i.estudiante_id', $estudianteId)
+            ->where('i.estado', 'activa')
+            ->where('i.grupo_id !=', $grupoId)
+            ->get()->getRowArray();
+
         if ($inscripcionModel->enroll($estudianteId, $grupoId)) {
+            // If it was a group change, send notification
+            if ($inscripcionAnterior) {
+                $this->notificarCambioGrupo((int)$estudianteId, $inscripcionAnterior, $grupoId);
+            }
             return redirect()->back()->with('success', 'Estudiante inscrito exitosamente');
         }
 
@@ -336,6 +350,57 @@ class GroupController extends BaseController
                     ->where('profesor_id', $profId)
                     ->update(['es_titular' => $profId == $titular ? 1 : 0]);
             }
+        }
+    }
+
+    /**
+     * Notify acudiente about a group change
+     */
+    protected function notificarCambioGrupo(int $estudianteId, array $grupoAnterior, int $grupoNuevoId): void
+    {
+        try {
+            $db = \Config\Database::connect();
+
+            $estudiante = $db->table('estudiantes e')
+                ->select('e.nombres, e.apellidos, a.nombres as acud_nombres, a.apellidos as acud_apellidos, u.email')
+                ->join('acudientes a', 'a.id = e.acudiente_id')
+                ->join('usuarios u', 'u.id = a.usuario_id')
+                ->where('e.id', $estudianteId)
+                ->get()->getRowArray();
+
+            if (!$estudiante) return;
+
+            $grupoNuevo = $db->table('grupos')->where('id', $grupoNuevoId)->get()->getRowArray();
+            if (!$grupoNuevo) return;
+
+            // Get schedule for new group
+            $horario = $db->query("
+                SELECT h.dia_semana, h.hora_inicio, h.hora_fin, h.lugar
+                FROM grupo_horarios gh
+                JOIN horarios h ON h.id = gh.horario_id
+                WHERE gh.grupo_id = ?
+                AND (gh.vigente_hasta IS NULL OR gh.vigente_hasta >= CURDATE())
+                LIMIT 1
+            ", [$grupoNuevoId])->getRowArray();
+
+            $horarioTexto = $horario
+                ? ucfirst($horario['dia_semana']) . ' ' . substr($horario['hora_inicio'], 0, 5) . ' - ' . substr($horario['hora_fin'], 0, 5) . ($horario['lugar'] ? ' (' . $horario['lugar'] . ')' : '')
+                : 'Por confirmar';
+
+            $sendgrid = new \App\Libraries\SendGridService();
+            $sendgrid->enviar(
+                ['email' => $estudiante['email'], 'nombre' => $estudiante['acud_nombres']],
+                'cambio_grupo',
+                [
+                    'nombre_acudiente'  => $estudiante['acud_nombres'] . ' ' . $estudiante['acud_apellidos'],
+                    'nombre_estudiante' => $estudiante['nombres'] . ' ' . $estudiante['apellidos'],
+                    'grupo_anterior'    => $grupoAnterior['grupo_nombre'],
+                    'grupo_nuevo'       => $grupoNuevo['nombre'],
+                    'horario_nuevo'     => $horarioTexto,
+                ]
+            );
+        } catch (\Exception $e) {
+            log_message('error', 'Error enviando email cambio_grupo: ' . $e->getMessage());
         }
     }
 

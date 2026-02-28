@@ -13,3 +13,9 @@
     <i class="bi bi-check2-square"></i>
     Asistencia
 </a>
+
+<div class="nav-section">Inscripciones</div>
+<a href="<?= site_url('profesor/inscripcion') ?>" class="nav-link <?= ($activePage ?? '') === 'inscripcion' ? 'active' : '' ?>">
+    <i class="bi bi-link-45deg"></i>
+    Enlaces de Inscripcion
+</a>

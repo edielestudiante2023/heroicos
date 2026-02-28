@@ -1,20 +1,29 @@
-// Service Worker - Academia Heroicos PWA
-const CACHE_VERSION = 'heroicos-v3';
-const STATIC_CACHE = 'heroicos-static-v3';
+// Service Worker - Academia Heroicos PWA v4 (Offline Sync Support)
+const CACHE_VERSION = 'heroicos-v4';
+const STATIC_CACHE = 'heroicos-static-v4';
 
 // Assets to pre-cache on install
 const PRE_CACHE_ASSETS = [
     '/offline.html',
     '/assets/images/heroicos.png',
     '/manifest.json',
+    '/assets/js/heroicos-db.js',
+    '/assets/js/heroicos-sync.js',
+    '/assets/js/heroicos-offline.js',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css',
     'https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js'
 ];
 
+// API endpoints that support offline POST
+const SYNCABLE_ENDPOINTS = [
+    '/api/offline/attendance',
+    '/api/offline/payments'
+];
+
 // Install event - pre-cache essential assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing Service Worker v3...');
+    console.log('[SW] Installing Service Worker v4...');
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then((cache) => {
@@ -27,7 +36,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean ALL old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating Service Worker v3...');
+    console.log('[SW] Activating Service Worker v4...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
@@ -47,7 +56,13 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Skip non-GET requests
+    // --- Offline POST interception for sync API endpoints ---
+    if (request.method === 'POST' && isSyncableEndpoint(url.pathname)) {
+        event.respondWith(handleOfflinePost(request));
+        return;
+    }
+
+    // Skip non-GET requests (all other POSTs pass through normally)
     if (request.method !== 'GET') return;
 
     // Skip non-http(s) requests
@@ -77,6 +92,53 @@ self.addEventListener('fetch', (event) => {
     // Everything else: Network only (no caching)
     return;
 });
+
+// --- Background Sync ---
+self.addEventListener('sync', (event) => {
+    if (event.tag === 'heroicos-sync') {
+        event.waitUntil(notifyClientsToSync());
+    }
+});
+
+// --- Message listener (from client) ---
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'REGISTER_SYNC') {
+        if (self.registration.sync) {
+            self.registration.sync.register('heroicos-sync').catch(() => {});
+        }
+    }
+});
+
+// --- Offline POST handler ---
+async function handleOfflinePost(request) {
+    try {
+        const response = await fetch(request.clone());
+        return response;
+    } catch (error) {
+        // Network failed - signal client to queue locally
+        return new Response(JSON.stringify({
+            offline: true,
+            message: 'Guardado localmente. Se sincronizara cuando haya conexion.'
+        }), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Offline-Queued': 'true'
+            }
+        });
+    }
+}
+
+function isSyncableEndpoint(pathname) {
+    return SYNCABLE_ENDPOINTS.some((ep) => pathname.includes(ep));
+}
+
+async function notifyClientsToSync() {
+    const clients = await self.clients.matchAll({ type: 'window' });
+    clients.forEach((client) => {
+        client.postMessage({ type: 'SYNC_REQUESTED' });
+    });
+}
 
 // --- Cache Strategies ---
 
