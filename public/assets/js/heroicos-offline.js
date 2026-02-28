@@ -246,17 +246,19 @@
      * Falls back to navigator.onLine if fetch fails with a non-network error.
      */
     function checkRealConnectivity() {
-        // Quick bail: if browser says offline, trust it
-        if (!navigator.onLine) return Promise.resolve(false);
+        // Do NOT trust navigator.onLine - it lies on mobile.
+        // Always do a real fetch to verify server reachability.
+        console.log('[HeroicosOffline] Checking connectivity... navigator.onLine=' + navigator.onLine);
 
         return fetch('/api/offline/session-check', {
             method: 'GET',
             cache: 'no-store',
             signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined
         }).then(function (res) {
-            // Any HTTP response means server is reachable
+            console.log('[HeroicosOffline] Connectivity check: OK (HTTP ' + res.status + ')');
             return true;
-        }).catch(function () {
+        }).catch(function (err) {
+            console.warn('[HeroicosOffline] Connectivity check failed:', err.message);
             // Network error = truly offline
             return false;
         });
@@ -309,6 +311,7 @@
 
                 // Set initial state using real connectivity check
                 checkRealConnectivity().then(function (isOnline) {
+                    console.log('[HeroicosOffline] Init connectivity result: ' + (isOnline ? 'ONLINE' : 'OFFLINE'));
                     if (!isOnline) {
                         showOfflineBanner();
                     }
