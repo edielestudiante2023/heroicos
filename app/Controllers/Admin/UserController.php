@@ -187,8 +187,16 @@ class UserController extends BaseController
             // Log action
             $this->logAction('CREATE', 'usuarios', $userId);
 
+            // Enviar email de bienvenida con credenciales
+            $this->enviarEmailBienvenida(
+                $this->request->getPost('email'),
+                $this->request->getPost('nombres'),
+                $this->request->getPost('password'),
+                $rol['nombre']
+            );
+
             return redirect()->to('/admin/users')
-                           ->with('message', 'Usuario creado exitosamente.');
+                           ->with('message', 'Usuario creado exitosamente. Se enviaron las credenciales por email.');
 
         } catch (\Exception $e) {
             $db->transRollback();
@@ -423,6 +431,27 @@ class UserController extends BaseController
             $db->transRollback();
             return redirect()->to('/admin/users')
                            ->with('error', 'Error al eliminar usuario: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send welcome email with credentials to newly created user
+     */
+    protected function enviarEmailBienvenida(string $email, string $nombres, string $password, string $rol): void
+    {
+        try {
+            $sendgrid = new \App\Libraries\SendGridService();
+            $sendgrid->enviar(
+                ['email' => $email, 'nombre' => $nombres],
+                'bienvenida',
+                [
+                    'nombre_acudiente' => $nombres,
+                    'email'            => $email,
+                    'password_temporal'=> $password,
+                ]
+            );
+        } catch (\Exception $e) {
+            log_message('error', 'Error enviando email de bienvenida: ' . $e->getMessage());
         }
     }
 
