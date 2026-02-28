@@ -6,6 +6,27 @@
     <meta name="description" content="Academia Heroicos - Sistema de Gestión">
     <title><?= $title ?? 'Academia Heroicos' ?></title>
 
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#b720d2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Heroicos">
+    <meta name="application-name" content="Heroicos">
+    <meta name="msapplication-TileColor" content="#b720d2">
+    <meta name="msapplication-TileImage" content="<?= base_url('assets/icons/icon-144x144.png') ?>">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="<?= base_url('manifest.json') ?>">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="<?= base_url('assets/icons/apple-touch-icon.png') ?>">
+    <link rel="apple-touch-icon" sizes="152x152" href="<?= base_url('assets/icons/icon-152x152.png') ?>">
+    <link rel="apple-touch-icon" sizes="192x192" href="<?= base_url('assets/icons/icon-192x192.png') ?>">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= base_url('assets/icons/icon-96x96.png') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= base_url('assets/icons/icon-72x72.png') ?>">
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -329,6 +350,48 @@
         </div>
     </main>
 
+    <!-- PWA Install Banner -->
+    <div id="pwaInstallBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:10000;">
+        <div style="background:white;margin:12px;border-radius:16px;box-shadow:0 -2px 20px rgba(0,0,0,0.15);padding:20px;max-width:420px;margin-left:auto;margin-right:auto;">
+            <div style="display:flex;align-items:center;gap:14px;">
+                <img src="<?= base_url('assets/images/heroicos.png') ?>" alt="Heroicos" style="width:56px;height:56px;border-radius:12px;object-fit:contain;background:#f8e6fc;padding:4px;">
+                <div style="flex:1;">
+                    <div style="font-weight:700;font-size:1rem;color:#333;">Instala Heroicos en tu dispositivo</div>
+                    <div style="font-size:0.8rem;color:#6c757d;margin-top:2px;">Accede más rápido sin abrir el navegador</div>
+                </div>
+                <button id="pwaInstallClose" style="background:none;border:none;font-size:1.4rem;color:#adb5bd;cursor:pointer;padding:0;line-height:1;">&times;</button>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:16px;">
+                <button id="pwaInstallLater" style="flex:1;background:none;border:none;color:#6c757d;font-size:0.875rem;cursor:pointer;padding:10px;">Ahora no</button>
+                <button id="pwaInstallBtn" style="flex:2;background:linear-gradient(135deg,#b720d2,#8a189e);color:white;border:none;border-radius:10px;padding:10px 20px;font-weight:600;font-size:0.95rem;cursor:pointer;transition:all 0.2s;">
+                    <i class="bi bi-download me-1"></i> Instalar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA iOS Install Instructions -->
+    <div id="pwaIOSBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:10000;">
+        <div style="background:white;margin:12px;border-radius:16px;box-shadow:0 -2px 20px rgba(0,0,0,0.15);padding:20px;max-width:420px;margin-left:auto;margin-right:auto;">
+            <div style="display:flex;align-items:flex-start;gap:14px;">
+                <img src="<?= base_url('assets/images/heroicos.png') ?>" alt="Heroicos" style="width:48px;height:48px;border-radius:12px;object-fit:contain;background:#f8e6fc;padding:4px;">
+                <div style="flex:1;">
+                    <div style="font-weight:700;font-size:1rem;color:#333;">Instala Heroicos</div>
+                    <div style="font-size:0.85rem;color:#6c757d;margin-top:6px;line-height:1.5;">
+                        1. Toca el botón <strong>Compartir</strong>
+                        <svg style="width:16px;height:16px;vertical-align:middle;margin:0 2px;" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                        <br>
+                        2. Selecciona <strong>"Agregar a pantalla de inicio"</strong>
+                    </div>
+                </div>
+                <button id="pwaIOSClose" style="background:none;border:none;font-size:1.4rem;color:#adb5bd;cursor:pointer;padding:0;line-height:1;">&times;</button>
+            </div>
+            <div style="text-align:center;margin-top:8px;">
+                <svg style="width:20px;height:20px;opacity:0.3;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16l-6-6h12z"/></svg>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -348,6 +411,83 @@
             sidebarOverlay.classList.remove('show');
         });
     </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(reg => console.log('SW registered:', reg.scope))
+                .catch(err => console.log('SW registration failed:', err));
+        });
+    }
+    </script>
+
+    <!-- PWA Install Logic (Main) -->
+    <script>
+    (function() {
+        let deferredPrompt = null;
+        const installBanner = document.getElementById('pwaInstallBanner');
+        const installBtn = document.getElementById('pwaInstallBtn');
+        const installLater = document.getElementById('pwaInstallLater');
+        const installClose = document.getElementById('pwaInstallClose');
+        const iosBanner = document.getElementById('pwaIOSBanner');
+        const iosClose = document.getElementById('pwaIOSClose');
+
+        // Don't show if already installed or dismissed
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        const wasDismissed = localStorage.getItem('pwa-install-dismissed');
+
+        if (isStandalone || wasDismissed) return;
+
+        // Android/Chrome: intercept beforeinstallprompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBanner.style.display = 'block';
+        });
+
+        // iOS detection
+        const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
+        if (isIOS) {
+            iosBanner.style.display = 'block';
+        }
+
+        // Install button click
+        if (installBtn) {
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('PWA install outcome:', outcome);
+                    deferredPrompt = null;
+                    installBanner.style.display = 'none';
+                    if (outcome === 'accepted') {
+                        localStorage.setItem('pwa-install-dismissed', '1');
+                    }
+                }
+            });
+        }
+
+        // Close / Later buttons
+        function dismissBanner() {
+            installBanner.style.display = 'none';
+            iosBanner.style.display = 'none';
+            localStorage.setItem('pwa-install-dismissed', '1');
+        }
+
+        installLater?.addEventListener('click', dismissBanner);
+        installClose?.addEventListener('click', dismissBanner);
+        iosClose?.addEventListener('click', dismissBanner);
+
+        window.addEventListener('appinstalled', () => {
+            installBanner.style.display = 'none';
+            localStorage.setItem('pwa-install-dismissed', '1');
+            console.log('PWA installed successfully');
+        });
+    })();
+    </script>
+
     <?= $this->renderSection('scripts') ?>
 </body>
 </html>

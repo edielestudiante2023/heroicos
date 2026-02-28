@@ -1,0 +1,148 @@
+<?php
+
+namespace App\Controllers\Admin;
+
+use App\Controllers\BaseController;
+use App\Models\CargoModel;
+use App\Models\ConceptoCobroModel;
+use App\Models\PeriodoModel;
+use App\Models\TarifaModel;
+use App\Models\StudentModel;
+use App\Models\PagoDetalleModel;
+use CodeIgniter\HTTP\ResponseInterface;
+
+class CarteraController extends BaseController
+{
+    protected CargoModel $cargoModel;
+    protected ConceptoCobroModel $conceptoModel;
+    protected PeriodoModel $periodoModel;
+
+    public function __construct()
+    {
+        $this->cargoModel = new CargoModel();
+        $this->conceptoModel = new ConceptoCobroModel();
+        $this->periodoModel = new PeriodoModel();
+    }
+
+    /**
+     * Dashboard financiero - cartera general
+     */
+    public function index(): string
+    {
+        $filters = [
+            'estado'      => $this->request->getGet('estado'),
+            'concepto_id' => $this->request->getGet('concepto_id'),
+            'search'      => $this->request->getGet('search'),
+        ];
+
+        $data = [
+            'title'      => 'Cartera - Academia Heroicos',
+            'pageTitle'  => 'Cartera',
+            'activePage' => 'cartera',
+            'stats'      => $this->cargoModel->getStats(),
+            'cargos'     => $this->cargoModel->getCarteraGeneral($filters),
+            'conceptos'  => $this->conceptoModel->getActive(),
+            'morosos'    => $this->cargoModel->getMorosos(),
+            'filters'    => $filters,
+        ];
+
+        return view('admin/cartera/index', $data);
+    }
+
+    /**
+     * Cuenta individual del estudiante
+     */
+    public function estudiante(int $id): string
+    {
+        $studentModel = new StudentModel();
+        $estudiante = $studentModel->getWithAcudiente($id);
+
+        if (!$estudiante) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Estudiante no encontrado');
+        }
+
+        $cuenta = $this->cargoModel->getCuentaEstudiante($id);
+
+        // Get payment history for each cargo
+        $pagoDetalleModel = new PagoDetalleModel();
+        foreach ($cuenta['cargos'] as &$cargo) {
+            $cargo['pagos'] = $pagoDetalleModel->getByCargo($cargo['id']);
+        }
+
+        $data = [
+            'title'      => 'Cuenta de ' . $estudiante['nombres'] . ' ' . $estudiante['apellidos'],
+            'pageTitle'  => 'Cuenta Estudiante',
+            'activePage' => 'cartera',
+            'estudiante' => $estudiante,
+            'cuenta'     => $cuenta,
+            'conceptos'  => $this->conceptoModel->getActive(),
+            'periodos'   => $this->periodoModel->getAll(),
+        ];
+
+        return view('admin/cartera/estudiante', $data);
+    }
+
+    /**
+     * Generar cargo manual
+     */
+    public function generarCargo(): ResponseInterface
+    {
+        $rules = [
+            'estudiante_id' => 'required|integer',
+            'concepto_id'   => 'required|integer',
+            'periodo_id'    => 'required|integer',
+            'valor'         => 'required|decimal',
+            'descripcion'   => 'required|max_length[255]',
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Por favor complete todos los campos correctamente');
+        }
+
+        $valor = (float)$this->request->getPost('valor');
+
+        $data = [
+            'estudiante_id'    => $this->request->getPost('estudiante_id'),
+            'concepto_id'      => $this->request->getPost('concepto_id'),
+            'periodo_id'       => $this->request->getPost('periodo_id'),
+            'descripcion'      => $this->request->getPost('descripcion'),
+            'mes'              => $this->request->getPost('mes') ?: null,
+            'anio'             => $this->request->getPost('anio') ?: date('Y'),
+            'valor_original'   => $valor,
+            'valor_pagado'     => 0,
+            'saldo_pendiente'  => $valor,
+            'fecha_vencimiento'=> $this->request->getPost('fecha_vencimiento') ?: null,
+            'estado'           => 'pendiente',
+            'generado_auto'    => 0,
+        ];
+
+        if ($this->cargoModel->insert($data)) {
+            return redirect()->to('admin/cartera/estudiante/' . $data['estudiante_id'])
+                ->with('success', 'Cargo generado exitosamente');
+        }
+
+        return redirect()->back()->with('error', 'Error al generar el cargo');
+    }
+
+    /**
+     * Anular cargo
+     */
+    public function anularCargo(int $id): ResponseInterface
+    {
+        $cargo = $this->cargoModel->find($id);
+
+        if (!$cargo) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Cargo no encontrado');
+        }
+
+        if ($cargo['valor_pagado'] > 0) {
+            return redirect()->back()->with('error', 'No se puede anular un cargo que ya tiene pagos aplicados');
+        }
+
+        $this->cargoModel->update($id, ['estado' => 'anulado']);
+
+        return redirect()->back()->with('success', 'Cargo anulado exitosamente');
+    }
+}

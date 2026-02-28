@@ -1,63 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('sidebar') ?>
-<div class="nav-section">Principal</div>
-<a href="<?= site_url('admin/dashboard') ?>" class="nav-link active">
-    <i class="bi bi-speedometer2"></i>
-    Dashboard
-</a>
-
-<div class="nav-section">Gestión</div>
-<a href="<?= site_url('admin/users') ?>" class="nav-link">
-    <i class="bi bi-people"></i>
-    Usuarios
-</a>
-<a href="<?= site_url('admin/students') ?>" class="nav-link">
-    <i class="bi bi-person-badge"></i>
-    Estudiantes
-</a>
-<a href="<?= site_url('admin/groups') ?>" class="nav-link">
-    <i class="bi bi-collection"></i>
-    Grupos
-</a>
-<a href="<?= site_url('admin/schedules') ?>" class="nav-link">
-    <i class="bi bi-calendar3"></i>
-    Horarios
-</a>
-
-<div class="nav-section">Finanzas</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-cash-stack"></i>
-    Pagos
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-file-earmark-text"></i>
-    Conceptos
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-clipboard-check"></i>
-    Cartera
-</a>
-
-<div class="nav-section">Actividades</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-trophy"></i>
-    Torneos
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-person-video3"></i>
-    Clases Privadas
-</a>
-
-<div class="nav-section">Reportes</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-graph-up"></i>
-    Estadísticas
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-file-earmark-pdf"></i>
-    Paz y Salvo
-</a>
+<?php $activePage = 'dashboard'; ?>
+<?= $this->include('partials/admin_sidebar') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -120,14 +65,25 @@
     </div>
 </div>
 
+<!-- Cartera Summary -->
+<?php if ($stats['total_por_cobrar'] > 0): ?>
+<div class="alert alert-warning d-flex align-items-center mb-4">
+    <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+    <div>
+        <strong>Cartera Pendiente:</strong> $<?= number_format($stats['total_por_cobrar'], 0, ',', '.') ?> por cobrar
+        <a href="<?= site_url('admin/cartera') ?>" class="ms-2">Ver detalle</a>
+    </div>
+</div>
+<?php endif; ?>
+
 <!-- Content Row -->
 <div class="row g-4">
     <!-- Pagos Pendientes -->
     <div class="col-lg-6">
         <div class="table-card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="bi bi-cash-stack me-2"></i>Pagos Pendientes de Aprobación</span>
-                <a href="#" class="btn btn-sm btn-outline-primary">Ver todos</a>
+                <span><i class="bi bi-cash-stack me-2"></i>Pagos Pendientes de Aprobaci&oacute;n</span>
+                <a href="<?= site_url('admin/payments?estado=pendiente_revision') ?>" class="btn btn-sm btn-outline-primary">Ver todos</a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($pagos_recientes)): ?>
@@ -149,11 +105,11 @@
                             <tbody>
                                 <?php foreach ($pagos_recientes as $pago): ?>
                                 <tr>
-                                    <td><?= esc($pago['estudiante_nombre'] . ' ' . $pago['estudiante_apellido']) ?></td>
-                                    <td>$<?= number_format($pago['monto'], 0, ',', '.') ?></td>
+                                    <td><?= esc(($pago['acudiente_nombres'] ?? '') . ' ' . ($pago['acudiente_apellidos'] ?? '')) ?></td>
+                                    <td>$<?= number_format($pago['valor_total'] ?? 0, 0, ',', '.') ?></td>
                                     <td><?= date('d/m/Y', strtotime($pago['created_at'])) ?></td>
                                     <td>
-                                        <a href="#" class="btn btn-sm btn-primary">Revisar</a>
+                                        <a href="<?= site_url('admin/payments/' . $pago['id']) ?>" class="btn btn-sm btn-primary">Revisar</a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -170,7 +126,7 @@
         <div class="table-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-person-plus me-2"></i>Inscripciones Recientes</span>
-                <a href="#" class="btn btn-sm btn-outline-primary">Ver todos</a>
+                <a href="<?= site_url('admin/groups') ?>" class="btn btn-sm btn-outline-primary">Ver grupos</a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($inscripciones_recientes)): ?>
@@ -227,7 +183,7 @@
                     <a href="<?= site_url('admin/students/new') ?>" class="btn btn-primary">
                         <i class="bi bi-person-plus me-2"></i>Nuevo Estudiante
                     </a>
-                    <a href="#" class="btn btn-success">
+                    <a href="<?= site_url('admin/payments/create') ?>" class="btn btn-success">
                         <i class="bi bi-cash-stack me-2"></i>Registrar Pago
                     </a>
                     <a href="<?= site_url('admin/groups/new') ?>" class="btn btn-info text-white">

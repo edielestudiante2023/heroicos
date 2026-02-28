@@ -1,39 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('sidebar') ?>
-<div class="nav-section">Principal</div>
-<a href="<?= site_url('admin/dashboard') ?>" class="nav-link">
-    <i class="bi bi-speedometer2"></i>
-    Dashboard
-</a>
-
-<div class="nav-section">Gestión</div>
-<a href="<?= site_url('admin/users') ?>" class="nav-link">
-    <i class="bi bi-people"></i>
-    Usuarios
-</a>
-<a href="<?= site_url('admin/students') ?>" class="nav-link active">
-    <i class="bi bi-person-badge"></i>
-    Estudiantes
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-collection"></i>
-    Grupos
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-calendar3"></i>
-    Horarios
-</a>
-
-<div class="nav-section">Finanzas</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-cash-stack"></i>
-    Pagos
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-clipboard-check"></i>
-    Cartera
-</a>
+<?php $activePage = 'students'; ?>
+<?= $this->include('partials/admin_sidebar') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>

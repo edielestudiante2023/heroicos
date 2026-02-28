@@ -6,6 +6,27 @@
     <meta name="description" content="Academia Heroicos - Escuela de Fútbol">
     <title><?= $title ?? 'Academia Heroicos' ?></title>
 
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#b720d2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Heroicos">
+    <meta name="application-name" content="Heroicos">
+    <meta name="msapplication-TileColor" content="#b720d2">
+    <meta name="msapplication-TileImage" content="<?= base_url('assets/icons/icon-144x144.png') ?>">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="<?= base_url('manifest.json') ?>">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="<?= base_url('assets/icons/apple-touch-icon.png') ?>">
+    <link rel="apple-touch-icon" sizes="152x152" href="<?= base_url('assets/icons/icon-152x152.png') ?>">
+    <link rel="apple-touch-icon" sizes="192x192" href="<?= base_url('assets/icons/icon-192x192.png') ?>">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= base_url('assets/icons/icon-96x96.png') ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?= base_url('assets/icons/icon-72x72.png') ?>">
+
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -145,7 +166,80 @@
         </div>
     </div>
 
+    <!-- PWA Install Hint Banner (Auth) -->
+    <div id="pwaInstallHintAuth" style="display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(138,24,158,0.95);color:white;padding:10px 16px;text-align:center;font-size:0.875rem;z-index:9999;backdrop-filter:blur(10px);">
+        <span id="pwaInstallHintText">
+            <i class="bi bi-download me-1"></i>
+            Instala la app para un acceso más rápido
+            <button id="pwaInstallHintBtn" style="background:white;color:#b720d2;border:none;border-radius:20px;padding:4px 16px;margin-left:10px;font-weight:600;font-size:0.8rem;cursor:pointer;">Instalar</button>
+        </span>
+        <button onclick="closePwaHintAuth()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:1.2rem;position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;">&times;</button>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(reg => console.log('SW registered:', reg.scope))
+                .catch(err => console.log('SW registration failed:', err));
+        });
+    }
+    </script>
+
+    <!-- PWA Install Logic (Auth) -->
+    <script>
+    (function() {
+        let deferredPrompt = null;
+        const hintBanner = document.getElementById('pwaInstallHintAuth');
+        const hintBtn = document.getElementById('pwaInstallHintBtn');
+        const hintText = document.getElementById('pwaInstallHintText');
+
+        // Don't show if already installed or dismissed
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        const wasDismissed = localStorage.getItem('pwa-hint-auth-dismissed');
+
+        if (isStandalone || wasDismissed) return;
+
+        // Android/Chrome: intercept beforeinstallprompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            hintBanner.style.display = 'block';
+        });
+
+        // iOS detection
+        const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
+        if (isIOS) {
+            hintText.innerHTML = '<i class="bi bi-phone me-1"></i> Para instalar: toca <strong>Compartir</strong> <i class="bi bi-box-arrow-up"></i> y luego <strong>"Agregar a pantalla de inicio"</strong>';
+            hintBanner.style.display = 'block';
+        }
+
+        if (hintBtn) {
+            hintBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log('PWA install outcome:', outcome);
+                    deferredPrompt = null;
+                    hintBanner.style.display = 'none';
+                }
+            });
+        }
+
+        window.addEventListener('appinstalled', () => {
+            hintBanner.style.display = 'none';
+            localStorage.setItem('pwa-hint-auth-dismissed', '1');
+        });
+    })();
+
+    function closePwaHintAuth() {
+        document.getElementById('pwaInstallHintAuth').style.display = 'none';
+        localStorage.setItem('pwa-hint-auth-dismissed', '1');
+    }
+    </script>
 </body>
 </html>

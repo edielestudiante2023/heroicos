@@ -1,31 +1,8 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('sidebar') ?>
-<div class="nav-section">Principal</div>
-<a href="<?= site_url('profesor/dashboard') ?>" class="nav-link active">
-    <i class="bi bi-speedometer2"></i>
-    Dashboard
-</a>
-
-<div class="nav-section">Mis Clases</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-collection"></i>
-    Mis Grupos
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-calendar3"></i>
-    Mi Horario
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-clipboard-check"></i>
-    Asistencia
-</a>
-
-<div class="nav-section">Actividades</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-person-video3"></i>
-    Clases Privadas
-</a>
+<?php $activePage = 'dashboard'; ?>
+<?= $this->include('partials/profesor_sidebar') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -74,8 +51,9 @@
     </div>
 </div>
 
-<!-- Horario de Hoy -->
+<!-- Content Row -->
 <div class="row g-4">
+    <!-- Today's Schedule -->
     <div class="col-lg-6">
         <div class="table-card">
             <div class="card-header">
@@ -94,12 +72,15 @@
                             <div>
                                 <strong><?= esc($horario['grupo_nombre']) ?></strong>
                                 <div class="small text-muted">
-                                    <?= date('h:i A', strtotime($horario['hora_inicio'])) ?> -
-                                    <?= date('h:i A', strtotime($horario['hora_fin'])) ?>
+                                    <?= substr($horario['hora_inicio'], 0, 5) ?> -
+                                    <?= substr($horario['hora_fin'], 0, 5) ?>
+                                    <?php if (!empty($horario['lugar'])): ?>
+                                        | <?= esc($horario['lugar']) ?>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                            <a href="#" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-clipboard-check"></i> Asistencia
+                            <a href="<?= site_url('profesor/attendance/take/' . $horario['grupo_id']) ?>" class="btn btn-sm btn-success">
+                                <i class="bi bi-check2-square me-1"></i>Asistencia
                             </a>
                         </div>
                         <?php endforeach; ?>
@@ -109,11 +90,12 @@
         </div>
     </div>
 
-    <!-- Mis Grupos -->
+    <!-- My Groups -->
     <div class="col-lg-6">
         <div class="table-card">
-            <div class="card-header">
-                <i class="bi bi-collection me-2"></i>Mis Grupos
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-collection me-2"></i>Mis Grupos</span>
+                <a href="<?= site_url('profesor/groups') ?>" class="btn btn-sm btn-outline-primary">Ver todos</a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($mis_grupos)): ?>
@@ -124,12 +106,17 @@
                 <?php else: ?>
                     <div class="list-group list-group-flush">
                         <?php foreach ($mis_grupos as $grupo): ?>
-                        <a href="#" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <a href="<?= site_url('profesor/groups/' . $grupo['id']) ?>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
                             <div>
                                 <strong><?= esc($grupo['nombre']) ?></strong>
-                                <div class="small text-muted">Categoría: <?= esc($grupo['categoria']) ?></div>
+                                <div class="small text-muted">
+                                    <?= esc($grupo['categoria_nombre']) ?>
+                                    <?php if ($grupo['es_titular']): ?>
+                                        <span class="badge bg-primary ms-1">Titular</span>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                            <i class="bi bi-chevron-right"></i>
+                            <span class="badge bg-light text-dark"><?= $grupo['inscritos'] ?> estudiantes</span>
                         </a>
                         <?php endforeach; ?>
                     </div>

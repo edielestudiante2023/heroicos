@@ -13,7 +13,7 @@ class DashboardController extends BaseController
     {
         $db = \Config\Database::connect();
 
-        // Get statistics - using try/catch to handle missing tables gracefully
+        // Get statistics
         try {
             $totalEstudiantes = $db->table('estudiantes')->where('estado', 'activo')->countAllResults();
         } catch (\Exception $e) {
@@ -37,9 +37,20 @@ class DashboardController extends BaseController
         }
 
         try {
-            $pagosPendientes = $db->table('pagos')->where('estado', 'pendiente')->countAllResults();
+            $pagosPendientes = $db->table('pagos')->where('estado', 'pendiente_revision')->countAllResults();
         } catch (\Exception $e) {
             $pagosPendientes = 0;
+        }
+
+        // Cartera stats
+        try {
+            $totalPorCobrar = $db->table('cargos')
+                ->selectSum('saldo_pendiente')
+                ->whereIn('estado', ['pendiente', 'parcial'])
+                ->get()->getRowArray();
+            $totalPorCobrar = (float)($totalPorCobrar['saldo_pendiente'] ?? 0);
+        } catch (\Exception $e) {
+            $totalPorCobrar = 0;
         }
 
         $stats = [
@@ -47,18 +58,19 @@ class DashboardController extends BaseController
             'total_profesores'  => $totalProfesores,
             'total_grupos'      => $totalGrupos,
             'pagos_pendientes'  => $pagosPendientes,
+            'total_por_cobrar'  => $totalPorCobrar,
         ];
 
         // Recent payments pending approval
         try {
             $pagos_recientes = $db->table('pagos')
-                                  ->select('pagos.*, estudiantes.nombres as estudiante_nombre, estudiantes.apellidos as estudiante_apellido')
-                                  ->join('estudiantes', 'estudiantes.id = pagos.estudiante_id')
-                                  ->where('pagos.estado', 'pendiente')
-                                  ->orderBy('pagos.created_at', 'DESC')
-                                  ->limit(5)
-                                  ->get()
-                                  ->getResultArray();
+                ->select('pagos.*, a.nombres as acudiente_nombres, a.apellidos as acudiente_apellidos')
+                ->join('acudientes a', 'a.id = pagos.acudiente_id')
+                ->where('pagos.estado', 'pendiente_revision')
+                ->orderBy('pagos.created_at', 'DESC')
+                ->limit(5)
+                ->get()
+                ->getResultArray();
         } catch (\Exception $e) {
             $pagos_recientes = [];
         }
@@ -79,6 +91,7 @@ class DashboardController extends BaseController
         return view('admin/dashboard', [
             'title'     => 'Dashboard Admin - Academia Heroicos',
             'pageTitle' => 'Dashboard',
+            'activePage'=> 'dashboard',
             'stats'     => $stats,
             'pagos_recientes' => $pagos_recientes,
             'inscripciones_recientes' => $inscripciones_recientes,

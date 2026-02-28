@@ -74,8 +74,51 @@ $routes->group('admin', ['filter' => 'role:admin'], static function ($routes) {
     $routes->put('schedules/(:num)', 'Admin\ScheduleController::update/$1');
     $routes->delete('schedules/(:num)', 'Admin\ScheduleController::delete/$1');
 
-    // Payments management (future)
-    // $routes->resource('payments', ['controller' => 'Admin\PaymentController']);
+    // ---- FASE 5: Cartera, Pagos, Tarifas ----
+
+    // Cartera
+    $routes->get('cartera', 'Admin\CarteraController::index');
+    $routes->get('cartera/estudiante/(:num)', 'Admin\CarteraController::estudiante/$1');
+    $routes->post('cartera/generar-cargo', 'Admin\CarteraController::generarCargo');
+    $routes->post('cartera/anular/(:num)', 'Admin\CarteraController::anularCargo/$1');
+
+    // Payments
+    $routes->get('payments', 'Admin\PaymentController::index');
+    $routes->get('payments/create', 'Admin\PaymentController::create');
+    $routes->post('payments', 'Admin\PaymentController::store');
+    $routes->get('payments/cargos-pendientes', 'Admin\PaymentController::getCargosPendientes');
+    $routes->get('payments/(:num)', 'Admin\PaymentController::review/$1');
+    $routes->post('payments/(:num)/approve', 'Admin\PaymentController::approve/$1');
+    $routes->post('payments/(:num)/reject', 'Admin\PaymentController::reject/$1');
+
+    // Tarifas
+    $routes->get('tarifas', 'Admin\TarifaController::index');
+    $routes->get('tarifas/new', 'Admin\TarifaController::new');
+    $routes->post('tarifas', 'Admin\TarifaController::create');
+    $routes->get('tarifas/(:num)/edit', 'Admin\TarifaController::edit/$1');
+    $routes->put('tarifas/(:num)', 'Admin\TarifaController::update/$1');
+    $routes->delete('tarifas/(:num)', 'Admin\TarifaController::delete/$1');
+
+    // ---- FASE 6: Asistencia ----
+
+    // Attendance (admin)
+    $routes->get('attendance', 'Admin\AttendanceController::index');
+    $routes->get('attendance/report/(:num)', 'Admin\AttendanceController::report/$1');
+    $routes->get('attendance/session/(:num)', 'Admin\AttendanceController::session/$1');
+
+    // ---- FASE 7: Torneos ----
+
+    // Tournaments
+    $routes->get('tournaments', 'Admin\TournamentController::index');
+    $routes->get('tournaments/new', 'Admin\TournamentController::new');
+    $routes->post('tournaments', 'Admin\TournamentController::create');
+    $routes->get('tournaments/(:num)', 'Admin\TournamentController::show/$1');
+    $routes->get('tournaments/(:num)/edit', 'Admin\TournamentController::edit/$1');
+    $routes->put('tournaments/(:num)', 'Admin\TournamentController::update/$1');
+    $routes->delete('tournaments/(:num)', 'Admin\TournamentController::delete/$1');
+    $routes->post('tournaments/(:num)/enroll', 'Admin\TournamentController::enrollStudent/$1');
+    $routes->post('tournaments/(:num)/unenroll/(:num)', 'Admin\TournamentController::unenrollStudent/$1/$2');
+    $routes->post('tournaments/(:num)/status', 'Admin\TournamentController::changeStatus/$1');
 });
 
 // ============================================================================
@@ -85,12 +128,14 @@ $routes->group('admin', ['filter' => 'role:admin'], static function ($routes) {
 $routes->group('profesor', ['filter' => 'role:admin,profesor'], static function ($routes) {
     $routes->get('dashboard', 'Profesor\DashboardController::index');
 
-    // Attendance (future)
-    // $routes->get('attendance', 'Profesor\AttendanceController::index');
-    // $routes->post('attendance', 'Profesor\AttendanceController::save');
+    // Attendance
+    $routes->get('attendance', 'Profesor\AttendanceController::index');
+    $routes->get('attendance/take/(:num)', 'Profesor\AttendanceController::take/$1');
+    $routes->post('attendance/save', 'Profesor\AttendanceController::save');
 
-    // My groups (future)
-    // $routes->get('groups', 'Profesor\GroupController::index');
+    // My groups
+    $routes->get('groups', 'Profesor\GroupController::index');
+    $routes->get('groups/(:num)', 'Profesor\GroupController::show/$1');
 });
 
 // ============================================================================
