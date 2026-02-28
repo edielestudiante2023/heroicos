@@ -421,13 +421,42 @@
         });
     </script>
 
-    <!-- Service Worker Registration -->
+    <!-- Service Worker Registration + Auto-Update -->
     <script>
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                .then(reg => console.log('SW registered:', reg.scope))
-                .catch(err => console.log('SW registration failed:', err));
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function (reg) {
+                console.log('[SW] Registered:', reg.scope);
+
+                // Check for updates immediately, then every 60 seconds
+                reg.update().catch(function () {});
+                setInterval(function () { reg.update().catch(function () {}); }, 60000);
+
+                // Detect when a new SW is found and waiting
+                reg.addEventListener('updatefound', function () {
+                    var newWorker = reg.installing;
+                    if (!newWorker) return;
+
+                    newWorker.addEventListener('statechange', function () {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New SW ready - tell it to activate immediately
+                            console.log('[SW] New version found, activating...');
+                            newWorker.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                    });
+                });
+            }).catch(function (err) {
+                console.log('[SW] Registration failed:', err);
+            });
+
+            // When the new SW takes control, reload the page to use new assets
+            var refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function () {
+                if (refreshing) return;
+                refreshing = true;
+                console.log('[SW] New version active, reloading...');
+                window.location.reload();
+            });
         });
     }
     </script>

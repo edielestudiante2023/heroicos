@@ -102,6 +102,9 @@ self.addEventListener('sync', (event) => {
 
 // --- Message listener (from client) ---
 self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
     if (event.data && event.data.type === 'REGISTER_SYNC') {
         if (self.registration.sync) {
             self.registration.sync.register('heroicos-sync').catch(() => {});
