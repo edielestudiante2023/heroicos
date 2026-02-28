@@ -73,14 +73,24 @@
                                 <small class="text-muted">(dejar vacío para mantener actual)</small>
                             <?php endif; ?>
                         </label>
-                        <input type="password" class="form-control" id="password" name="password"
-                               <?= $action === 'create' ? 'required' : '' ?> minlength="8">
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password" name="password"
+                                   <?= $action === 'create' ? 'required' : '' ?> minlength="8">
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="password_confirm" class="form-label">Confirmar Contraseña</label>
-                        <input type="password" class="form-control" id="password_confirm" name="password_confirm"
-                               <?= $action === 'create' ? 'required' : '' ?>>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="password_confirm" name="password_confirm"
+                                   <?= $action === 'create' ? 'required' : '' ?>>
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_confirm">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="row">
@@ -147,4 +157,22 @@
         </form>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+document.querySelectorAll('.toggle-password').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var input = document.getElementById(this.dataset.target);
+        var icon = this.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
+});
+</script>
 <?= $this->endSection() ?>
