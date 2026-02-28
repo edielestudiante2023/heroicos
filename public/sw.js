@@ -1,12 +1,10 @@
 // Service Worker - Academia Heroicos PWA
-const CACHE_VERSION = 'heroicos-v1';
-const STATIC_CACHE = 'heroicos-static-v1';
-const DYNAMIC_CACHE = 'heroicos-dynamic-v1';
+const CACHE_VERSION = 'heroicos-v2';
+const STATIC_CACHE = 'heroicos-static-v2';
+const DYNAMIC_CACHE = 'heroicos-dynamic-v2';
 
 // Assets to pre-cache on install
 const PRE_CACHE_ASSETS = [
-    '/',
-    '/login',
     '/offline.html',
     '/assets/images/heroicos.png',
     '/manifest.json',
@@ -17,7 +15,7 @@ const PRE_CACHE_ASSETS = [
 
 // Install event - pre-cache essential assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing Service Worker v1...');
+    console.log('[SW] Installing Service Worker v2...');
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then((cache) => {
@@ -30,7 +28,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating Service Worker v1...');
+    console.log('[SW] Activating Service Worker v2...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(

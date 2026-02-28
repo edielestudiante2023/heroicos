@@ -2,7 +2,7 @@
     "name": "Academia Heroicos",
     "short_name": "Heroicos",
     "description": "Sistema de Gestión - Academia de Fútbol Heroicos",
-    "start_url": "/",
+    "start_url": "/login",
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait",
