@@ -60,7 +60,7 @@ class CreatePlantillasEmail extends Migration
                 'codigo' => 'bienvenida',
                 'nombre' => 'Bienvenida al club',
                 'asunto' => 'Bienvenido a Academia Heroicos',
-                'cuerpo_html' => '<h1>¡Bienvenido a Academia Heroicos!</h1><p>Hola {{nombre}},</p><p>Tu registro ha sido exitoso. Tus credenciales de acceso son:</p><p><strong>Usuario:</strong> {{email}}<br><strong>Contraseña:</strong> {{password_temporal}}</p><p>Te recomendamos cambiar tu contraseña en el primer inicio de sesión.</p><p>¡Nos vemos en la cancha!</p>',
+                'cuerpo_html' => '<h1>¡Bienvenido a Academia Heroicos!</h1><p>Hola {{nombre}},</p><p>Tu registro ha sido exitoso. Tus credenciales de acceso son:</p><p><strong>Usuario:</strong> {{email}}<br><strong>Contraseña:</strong> {{password_temporal}}</p><p>Te recomendamos cambiar tu contraseña en el primer inicio de sesión.</p><p style="text-align:center; margin:25px 0;"><a href="https://heroicos.cycloidtalent.com/login" style="background-color:#1a5f2a;color:#ffffff;padding:12px 30px;text-decoration:none;border-radius:6px;font-weight:600;display:inline-block;">Iniciar Sesión</a></p><p>¡Nos vemos en la cancha!</p>',
                 'variables' => '["nombre", "email", "password_temporal"]',
             ],
             [
