@@ -537,17 +537,8 @@
     <!-- Inline connectivity override (bypasses stale SW cache) -->
     <script>
     (function () {
-        // Force clear old SW caches so new JS files are served on next load
-        if ('caches' in window) {
-            caches.keys().then(function (names) {
-                names.forEach(function (name) {
-                    if (name !== 'heroicos-static-v5') {
-                        caches.delete(name);
-                        console.log('[Inline] Deleted old cache:', name);
-                    }
-                });
-            });
-        }
+        // NOTE: Do NOT delete caches here. Only the SW activate event should do that.
+        // Deleting caches from the page breaks offline.html when SW hasn't updated yet.
 
         // Real connectivity check - only show banner if server is truly unreachable
         // CSS !important hides the banner by default, old JS cannot override it.
