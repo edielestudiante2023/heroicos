@@ -1,7 +1,6 @@
 // Service Worker - Academia Heroicos PWA
-const CACHE_VERSION = 'heroicos-v2';
-const STATIC_CACHE = 'heroicos-static-v2';
-const DYNAMIC_CACHE = 'heroicos-dynamic-v2';
+const CACHE_VERSION = 'heroicos-v3';
+const STATIC_CACHE = 'heroicos-static-v3';
 
 // Assets to pre-cache on install
 const PRE_CACHE_ASSETS = [
@@ -15,7 +14,7 @@ const PRE_CACHE_ASSETS = [
 
 // Install event - pre-cache essential assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing Service Worker v2...');
+    console.log('[SW] Installing Service Worker v3...');
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then((cache) => {
@@ -26,14 +25,14 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate event - clean old caches
+// Activate event - clean ALL old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating Service Worker v2...');
+    console.log('[SW] Activating Service Worker v3...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames
-                    .filter((name) => name !== STATIC_CACHE && name !== DYNAMIC_CACHE)
+                    .filter((name) => name !== STATIC_CACHE)
                     .map((name) => {
                         console.log('[SW] Deleting old cache:', name);
                         return caches.delete(name);
@@ -43,7 +42,7 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch event - serve from cache with appropriate strategies
+// Fetch event
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
@@ -51,29 +50,32 @@ self.addEventListener('fetch', (event) => {
     // Skip non-GET requests
     if (request.method !== 'GET') return;
 
-    // Skip chrome-extension and other non-http(s) requests
+    // Skip non-http(s) requests
     if (!url.protocol.startsWith('http')) return;
 
-    // Strategy: Cache First for CDN assets (Bootstrap, icons fonts)
+    // NAVIGATION REQUESTS (HTML pages): Always go to network, never cache.
+    // Only show offline page if network is completely down.
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request).catch(() => caches.match('/offline.html'))
+        );
+        return;
+    }
+
+    // CDN assets: Cache First
     if (isCDNAsset(url)) {
         event.respondWith(cacheFirst(request));
         return;
     }
 
-    // Strategy: Stale While Revalidate for local static assets (images, icons)
+    // Local static assets: Stale While Revalidate
     if (isLocalAsset(url)) {
         event.respondWith(staleWhileRevalidate(request));
         return;
     }
 
-    // Strategy: Network First for HTML pages
-    if (request.headers.get('accept')?.includes('text/html')) {
-        event.respondWith(networkFirst(request));
-        return;
-    }
-
-    // Default: Network First
-    event.respondWith(networkFirst(request));
+    // Everything else: Network only (no caching)
+    return;
 });
 
 // --- Cache Strategies ---
@@ -91,29 +93,6 @@ async function cacheFirst(request) {
         }
         return response;
     } catch (error) {
-        console.log('[SW] Cache First fetch failed:', error);
-        return new Response('Offline', { status: 503 });
-    }
-}
-
-// Network First: Try network, fall back to cache, then offline page
-async function networkFirst(request) {
-    try {
-        const response = await fetch(request);
-        if (response.ok) {
-            const cache = await caches.open(DYNAMIC_CACHE);
-            cache.put(request, response.clone());
-        }
-        return response;
-    } catch (error) {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-
-        // If it's an HTML request and nothing in cache, show offline page
-        if (request.headers.get('accept')?.includes('text/html')) {
-            return caches.match('/offline.html');
-        }
-
         return new Response('Offline', { status: 503 });
     }
 }
