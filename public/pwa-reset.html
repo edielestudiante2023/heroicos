@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Reset - Heroicos</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 2rem auto; padding: 1rem; }
+        .btn { display: block; width: 100%; padding: 1rem; margin: 0.5rem 0; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+        .btn-danger { background: #d62b23; color: white; }
+        .btn-primary { background: #b720d2; color: white; }
+        #log { background: #1a1a1a; color: #0f0; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; white-space: pre-wrap; min-height: 200px; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+    <h2>PWA Reset - Academia Heroicos</h2>
+    <p>Esta página limpia el Service Worker y los caches de la PWA.</p>
+
+    <button class="btn btn-danger" onclick="fullReset()">Limpiar TODO (SW + Caches)</button>
+    <button class="btn btn-primary" onclick="checkStatus()">Ver estado actual</button>
+
+    <div id="log">Esperando acción...</div>
+
+    <script>
+        const logEl = document.getElementById('log');
+        function log(msg) {
+            logEl.textContent += '\n' + msg;
+            console.log(msg);
+        }
+
+        async function checkStatus() {
+            logEl.textContent = '=== ESTADO ACTUAL ===';
+
+            // Check display mode
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+            log('Modo: ' + (isStandalone ? 'STANDALONE (PWA)' : 'NAVEGADOR'));
+
+            // Check SW
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                log('Service Workers registrados: ' + regs.length);
+                regs.forEach((reg, i) => {
+                    log('  SW ' + i + ': scope=' + reg.scope);
+                    log('  SW ' + i + ': active=' + (reg.active ? reg.active.scriptURL : 'none'));
+                    log('  SW ' + i + ': waiting=' + (reg.waiting ? 'sí' : 'no'));
+                });
+            } else {
+                log('Service Worker: NO SOPORTADO');
+            }
+
+            // Check caches
+            const cacheNames = await caches.keys();
+            log('Caches: ' + cacheNames.length);
+            cacheNames.forEach(name => log('  - ' + name));
+
+            // Check cookies
+            log('Cookies: ' + (document.cookie || '(ninguna visible)'));
+
+            // Check localStorage
+            log('localStorage pwa-install-dismissed: ' + localStorage.getItem('pwa-install-dismissed'));
+            log('localStorage pwa-hint-auth-dismissed: ' + localStorage.getItem('pwa-hint-auth-dismissed'));
+        }
+
+        async function fullReset() {
+            logEl.textContent = '=== LIMPIANDO TODO ===';
+
+            // 1. Unregister all Service Workers
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                log('Desregistrando ' + regs.length + ' Service Worker(s)...');
+                for (const reg of regs) {
+                    const result = await reg.unregister();
+                    log('  SW desregistrado: ' + result);
+                }
+            }
+
+            // 2. Delete all caches
+            const cacheNames = await caches.keys();
+            log('Eliminando ' + cacheNames.length + ' cache(s)...');
+            for (const name of cacheNames) {
+                await caches.delete(name);
+                log('  Cache eliminado: ' + name);
+            }
+
+            // 3. Clear localStorage PWA items
+            localStorage.removeItem('pwa-install-dismissed');
+            localStorage.removeItem('pwa-hint-auth-dismissed');
+            log('localStorage limpiado');
+
+            log('');
+            log('=== LISTO ===');
+            log('Ahora cierra esta pestaña y entra a:');
+            log('https://heroicos.cycloidtalent.com/login');
+        }
+    </script>
+</body>
+</html>
