@@ -82,6 +82,9 @@ class PaymentController extends BaseController
         $userId = session()->get('user_id');
 
         if ($this->pagoModel->aprobar($id, $userId)) {
+            // Enviar email de pago aprobado al acudiente
+            $this->notificarPagoAprobado($pago);
+
             return redirect()->to('admin/payments')
                 ->with('success', 'Pago aprobado exitosamente. Recibo: ' . $pago['numero_recibo']);
         }
@@ -112,6 +115,9 @@ class PaymentController extends BaseController
         $userId = session()->get('user_id');
 
         if ($this->pagoModel->rechazar($id, $userId, $motivo)) {
+            // Enviar email de pago rechazado al acudiente
+            $this->notificarPagoRechazado($pago, $motivo);
+
             return redirect()->to('admin/payments')
                 ->with('success', 'Pago rechazado. Se notificará al acudiente.');
         }
@@ -277,10 +283,112 @@ class PaymentController extends BaseController
         $db->transComplete();
 
         if ($db->transStatus()) {
+            // Enviar email de pago recibido a los admins
+            $this->notificarPagoRecibido($pagoData);
+
             return redirect()->to('admin/payments')
                 ->with('success', 'Pago registrado exitosamente. Recibo: ' . $pagoData['numero_recibo']);
         }
 
         return redirect()->back()->with('error', 'Error al procesar el pago');
+    }
+
+    /**
+     * Notify acudiente that their payment was approved
+     */
+    protected function notificarPagoAprobado(array $pago): void
+    {
+        try {
+            $db = \Config\Database::connect();
+            $acudiente = $db->table('acudientes a')
+                ->select('a.nombres, a.apellidos, u.email')
+                ->join('usuarios u', 'u.id = a.usuario_id')
+                ->where('a.id', $pago['acudiente_id'])
+                ->get()->getRowArray();
+
+            if (!$acudiente) return;
+
+            $sendgrid = new \App\Libraries\SendGridService();
+            $sendgrid->enviar(
+                ['email' => $acudiente['email'], 'nombre' => $acudiente['nombres']],
+                'pago_aprobado',
+                [
+                    'nombre_acudiente' => $acudiente['nombres'] . ' ' . $acudiente['apellidos'],
+                    'valor'            => number_format($pago['valor_total'], 0, ',', '.'),
+                    'numero_recibo'    => $pago['numero_recibo'],
+                ]
+            );
+        } catch (\Exception $e) {
+            log_message('error', 'Error enviando email pago_aprobado: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notify acudiente that their payment was rejected
+     */
+    protected function notificarPagoRechazado(array $pago, string $motivo): void
+    {
+        try {
+            $db = \Config\Database::connect();
+            $acudiente = $db->table('acudientes a')
+                ->select('a.nombres, a.apellidos, u.email')
+                ->join('usuarios u', 'u.id = a.usuario_id')
+                ->where('a.id', $pago['acudiente_id'])
+                ->get()->getRowArray();
+
+            if (!$acudiente) return;
+
+            $sendgrid = new \App\Libraries\SendGridService();
+            $sendgrid->enviar(
+                ['email' => $acudiente['email'], 'nombre' => $acudiente['nombres']],
+                'pago_rechazado',
+                [
+                    'nombre_acudiente' => $acudiente['nombres'] . ' ' . $acudiente['apellidos'],
+                    'motivo'           => $motivo,
+                ]
+            );
+        } catch (\Exception $e) {
+            log_message('error', 'Error enviando email pago_rechazado: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Notify admins that a new payment was registered
+     */
+    protected function notificarPagoRecibido(array $pagoData): void
+    {
+        try {
+            $db = \Config\Database::connect();
+
+            $acudiente = $db->table('acudientes a')
+                ->select('a.nombres, a.apellidos')
+                ->where('a.id', $pagoData['acudiente_id'])
+                ->get()->getRowArray();
+
+            if (!$acudiente) return;
+
+            // Get all admin emails
+            $admins = $db->table('usuarios u')
+                ->select('u.email, u.nombre')
+                ->where('u.rol_id', 1)
+                ->where('u.estado', 'activo')
+                ->get()->getResultArray();
+
+            $sendgrid = new \App\Libraries\SendGridService();
+
+            foreach ($admins as $admin) {
+                $sendgrid->enviar(
+                    ['email' => $admin['email'], 'nombre' => $admin['nombre'] ?? 'Admin'],
+                    'pago_recibido',
+                    [
+                        'nombre_acudiente' => $acudiente['nombres'] . ' ' . $acudiente['apellidos'],
+                        'valor'            => number_format($pagoData['valor_total'], 0, ',', '.'),
+                        'numero_recibo'    => $pagoData['numero_recibo'],
+                    ]
+                );
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Error enviando email pago_recibido: ' . $e->getMessage());
+        }
     }
 }
