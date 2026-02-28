@@ -59,6 +59,8 @@
             color: white;
             z-index: 1000;
             transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-header {
@@ -78,6 +80,8 @@
 
         .sidebar-nav {
             padding: 1rem 0;
+            flex: 1;
+            overflow-y: auto;
         }
 
         .sidebar-nav .nav-link {
@@ -301,7 +305,7 @@
         </nav>
 
         <!-- User Info at Bottom -->
-        <div class="position-absolute bottom-0 w-100 p-3 border-top" style="border-color: rgba(255,255,255,0.1) !important;">
+        <div class="w-100 p-3 border-top" style="border-color: rgba(255,255,255,0.1) !important;">
             <div class="d-flex align-items-center gap-2">
                 <div class="user-avatar">
                     <?= strtoupper(substr(session()->get('nombre') ?? 'U', 0, 1)) ?>
