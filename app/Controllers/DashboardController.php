@@ -9,7 +9,7 @@ class DashboardController extends BaseController
      */
     public function index()
     {
-        $role = session()->get('rol_slug');
+        $role = session()->get('rol_nombre');
 
         switch ($role) {
             case 'admin':

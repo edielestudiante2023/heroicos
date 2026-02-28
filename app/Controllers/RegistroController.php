@@ -78,11 +78,10 @@ class RegistroController extends BaseController
             // Generate temporary password
             $passwordTemporal = substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'), 0, 8);
 
-            // Create user
+            // Create user (tabla usuarios no tiene columna 'nombre')
             $userId = $db->table('usuarios')->insert([
                 'email'      => $tokenData['email'],
                 'password'   => password_hash($passwordTemporal, PASSWORD_DEFAULT),
-                'nombre'     => $this->request->getPost('acud_nombres'),
                 'rol_id'     => 3, // acudiente
                 'estado'     => 'activo',
                 'created_at' => date('Y-m-d H:i:s'),
@@ -99,7 +98,6 @@ class RegistroController extends BaseController
                 'numero_documento' => $this->request->getPost('acud_numero_documento'),
                 'telefono'         => $this->request->getPost('acud_telefono'),
                 'direccion'        => $this->request->getPost('acud_direccion'),
-                'estado'           => 'activo',
                 'created_at'       => date('Y-m-d H:i:s'),
                 'updated_at'       => date('Y-m-d H:i:s'),
             ]);
@@ -223,7 +221,7 @@ class RegistroController extends BaseController
 
             // Get all active admins
             $admins = $db->table('usuarios')
-                ->select('email, nombre')
+                ->select('email')
                 ->where('rol_id', 1)
                 ->where('estado', 'activo')
                 ->get()->getResultArray();
@@ -231,7 +229,7 @@ class RegistroController extends BaseController
             // Get professor email if available
             $destinatarios = [];
             foreach ($admins as $admin) {
-                $destinatarios[] = ['email' => $admin['email'], 'nombre' => $admin['nombre'] ?? 'Admin'];
+                $destinatarios[] = ['email' => $admin['email'], 'nombre' => 'Admin'];
             }
 
             if ($profesorId) {

@@ -53,12 +53,11 @@ class AuthFilter implements FilterInterface
         $hashedToken = hash('sha256', $token);
         $db = \Config\Database::connect();
 
-        $user = $db->table('users')
-                   ->select('users.*, roles.nombre as rol_nombre, roles.slug as rol_slug')
-                   ->join('roles', 'roles.id = users.role_id')
-                   ->where('users.remember_token', $hashedToken)
-                   ->where('users.activo', 1)
-                   ->where('users.deleted_at', null)
+        $user = $db->table('usuarios')
+                   ->select('usuarios.*, roles.nombre as rol_nombre')
+                   ->join('roles', 'roles.id = usuarios.rol_id')
+                   ->where('usuarios.token_verificacion', $hashedToken)
+                   ->where('usuarios.estado', 'activo')
                    ->get()
                    ->getRowArray();
 
@@ -67,22 +66,41 @@ class AuthFilter implements FilterInterface
             return false;
         }
 
+        // Get profile name from role-specific table
+        $nombre = 'Usuario';
+        $apellido = '';
+        $userModel = new \App\Models\UserModel();
+        $profileData = $userModel->getProfileData($user['id'], $user['rol_nombre']);
+        if ($profileData) {
+            $nombre = $profileData['nombre'] ?? $profileData['nombres'] ?? 'Usuario';
+            $apellido = $profileData['apellido'] ?? $profileData['apellidos'] ?? '';
+        }
+
         // Set session data
         $sessionData = [
             'user_id'     => $user['id'],
             'email'       => $user['email'],
-            'nombre'      => $user['nombre'],
-            'apellido'    => $user['apellido'],
-            'role_id'     => $user['role_id'],
+            'nombre'      => $nombre,
+            'apellido'    => $apellido,
+            'rol_id'      => $user['rol_id'],
             'rol_nombre'  => $user['rol_nombre'],
-            'rol_slug'    => $user['rol_slug'],
             'isLoggedIn'  => true,
         ];
+
+        // Store role-specific profile ID
+        if ($user['rol_nombre'] === 'profesor') {
+            $prof = $db->table('profesores')->where('usuario_id', $user['id'])->get()->getRowArray();
+            if ($prof) $sessionData['profesor_id'] = $prof['id'];
+        } elseif ($user['rol_nombre'] === 'acudiente') {
+            $acud = $db->table('acudientes')->where('usuario_id', $user['id'])->get()->getRowArray();
+            if ($acud) $sessionData['acudiente_id'] = $acud['id'];
+        }
+
         session()->set($sessionData);
 
         // Update last login
-        $db->table('users')->where('id', $user['id'])->update([
-            'last_login' => date('Y-m-d H:i:s')
+        $db->table('usuarios')->where('id', $user['id'])->update([
+            'ultimo_acceso' => date('Y-m-d H:i:s')
         ]);
 
         return true;

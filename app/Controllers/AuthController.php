@@ -312,12 +312,25 @@ class AuthController extends BaseController
         log_message('info', "Reset URL for {$user['email']}: {$resetUrl}");
 
         try {
+            // Get profile name from acudientes/profesores table since usuarios has no nombre column
+            $db = \Config\Database::connect();
+            $nombre = 'Usuario';
+            $acud = $db->table('acudientes')->where('usuario_id', $user['id'])->get()->getRowArray();
+            if ($acud) {
+                $nombre = $acud['nombres'] ?? 'Usuario';
+            } else {
+                $prof = $db->table('profesores')->where('usuario_id', $user['id'])->get()->getRowArray();
+                if ($prof) {
+                    $nombre = $prof['nombres'] ?? 'Usuario';
+                }
+            }
+
             $sendgrid = new \App\Libraries\SendGridService();
             return $sendgrid->enviar(
-                ['email' => $user['email'], 'nombre' => $user['nombre'] ?? ''],
+                ['email' => $user['email'], 'nombre' => $nombre],
                 'recuperar_password',
                 [
-                    'nombre' => $user['nombre'] ?? 'Usuario',
+                    'nombre' => $nombre,
                     'enlace' => $resetUrl,
                 ]
             );

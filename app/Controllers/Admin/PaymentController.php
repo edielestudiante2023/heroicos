@@ -369,7 +369,7 @@ class PaymentController extends BaseController
 
             // Get all admin emails
             $admins = $db->table('usuarios u')
-                ->select('u.email, u.nombre')
+                ->select('u.email')
                 ->where('u.rol_id', 1)
                 ->where('u.estado', 'activo')
                 ->get()->getResultArray();
@@ -378,7 +378,7 @@ class PaymentController extends BaseController
 
             foreach ($admins as $admin) {
                 $sendgrid->enviar(
-                    ['email' => $admin['email'], 'nombre' => $admin['nombre'] ?? 'Admin'],
+                    ['email' => $admin['email'], 'nombre' => 'Admin'],
                     'pago_recibido',
                     [
                         'nombre_acudiente' => $acudiente['nombres'] . ' ' . $acudiente['apellidos'],
