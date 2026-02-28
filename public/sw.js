@@ -1,5 +1,5 @@
 // Service Worker - Academia Heroicos PWA v5 (Offline Sync Support)
-const CACHE_VERSION = 'heroicos-v5';
+const CACHE_VERSION = 'heroicos-v6';
 const STATIC_CACHE = 'heroicos-static-v5';
 
 // Assets to pre-cache on install
@@ -23,7 +23,7 @@ const SYNCABLE_ENDPOINTS = [
 
 // Install event - pre-cache essential assets
 self.addEventListener('install', (event) => {
-    console.log('[SW] Installing Service Worker v5...');
+    console.log('[SW] Installing Service Worker v6...');
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then((cache) => {
@@ -36,7 +36,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean ALL old caches
 self.addEventListener('activate', (event) => {
-    console.log('[SW] Activating Service Worker v5...');
+    console.log('[SW] Activating Service Worker v6...');
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(

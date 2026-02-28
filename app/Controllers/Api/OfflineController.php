@@ -56,6 +56,70 @@ class OfflineController extends BaseController
     }
 
     // =========================================================================
+    // ADMIN: DATA PREFETCH
+    // =========================================================================
+
+    /**
+     * GET /api/offline/admin/dashboard
+     * Returns admin dashboard stats + recent data for offline display.
+     */
+    public function adminDashboard(): ResponseInterface
+    {
+        $db = \Config\Database::connect();
+
+        $totalEstudiantes = $db->table('estudiantes')->where('estado', 'activo')->countAllResults();
+        $totalProfesores = $db->table('usuarios')
+            ->join('roles', 'roles.id = usuarios.rol_id')
+            ->where('roles.nombre', 'profesor')
+            ->where('usuarios.estado', 'activo')
+            ->countAllResults();
+        $totalGrupos = $db->table('grupos')->where('estado', 'activo')->countAllResults();
+        $pagosPendientes = $db->table('pagos')->where('estado', 'pendiente_revision')->countAllResults();
+
+        $totalPorCobrar = $db->table('cargos')
+            ->selectSum('saldo_pendiente')
+            ->whereIn('estado', ['pendiente', 'parcial'])
+            ->get()->getRowArray();
+
+        // Recent groups with student counts
+        $grupos = $db->table('grupos g')
+            ->select('g.id, g.nombre, g.cupo_maximo, c.nombre as categoria_nombre')
+            ->join('categorias c', 'c.id = g.categoria_id', 'left')
+            ->where('g.estado', 'activo')
+            ->get()
+            ->getResultArray();
+
+        $inscripcionModel = new InscripcionModel();
+        foreach ($grupos as &$grupo) {
+            $grupo['id'] = (int) $grupo['id'];
+            $grupo['inscritos'] = count($inscripcionModel->getByGrupo($grupo['id']));
+        }
+
+        // Recent payments pending
+        $pagosRecientes = $db->table('pagos')
+            ->select('pagos.id, pagos.numero_recibo, pagos.valor_total, pagos.fecha_pago, pagos.metodo_pago, a.nombres as acudiente_nombres, a.apellidos as acudiente_apellidos')
+            ->join('acudientes a', 'a.id = pagos.acudiente_id')
+            ->where('pagos.estado', 'pendiente_revision')
+            ->orderBy('pagos.created_at', 'DESC')
+            ->limit(10)
+            ->get()
+            ->getResultArray();
+
+        return $this->response->setJSON([
+            'stats' => [
+                'total_estudiantes' => (int) $totalEstudiantes,
+                'total_profesores'  => (int) $totalProfesores,
+                'total_grupos'      => (int) $totalGrupos,
+                'pagos_pendientes'  => (int) $pagosPendientes,
+                'total_por_cobrar'  => (float) ($totalPorCobrar['saldo_pendiente'] ?? 0),
+            ],
+            'grupos'          => $grupos,
+            'pagos_recientes' => $pagosRecientes,
+            'cached_at'       => date('c'),
+        ]);
+    }
+
+    // =========================================================================
     // PROFESOR: DATA PREFETCH
     // =========================================================================
 

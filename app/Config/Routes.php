@@ -177,6 +177,9 @@ $routes->group('api/offline', ['filter' => 'apiauth'], static function ($routes)
     // Session check
     $routes->get('session-check', 'Api\OfflineController::sessionCheck');
 
+    // Admin: data prefetch
+    $routes->get('admin/dashboard', 'Api\OfflineController::adminDashboard');
+
     // Profesor: data prefetch
     $routes->get('profesor/grupos', 'Api\OfflineController::profesorGrupos');
     $routes->get('profesor/grupo/(:num)/estudiantes', 'Api\OfflineController::grupoEstudiantes/$1');

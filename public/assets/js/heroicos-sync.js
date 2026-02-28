@@ -336,6 +336,32 @@
         },
 
         /**
+         * Prefetch admin data for offline use
+         */
+        prefetchAdminData: function () {
+            return HeroicosDB.getUserSession().then(function (session) {
+                if (!session || session.rol_nombre !== 'admin') return false;
+
+                var scope = 'admin_' + session.user_id;
+
+                return fetch('/api/offline/admin/dashboard').then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                }).then(function (data) {
+                    return HeroicosDB.cacheData(
+                        'admin_dashboard_' + session.user_id,
+                        'admin_dashboard', scope, data, 12
+                    );
+                }).then(function () {
+                    return true;
+                });
+            }).catch(function (err) {
+                console.warn('[HeroicosSync] Prefetch admin failed:', err.message);
+                return false;
+            });
+        },
+
+        /**
          * Check if syncing is in progress
          */
         isSyncing: function () {

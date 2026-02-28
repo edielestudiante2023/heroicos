@@ -225,7 +225,11 @@
         var body = document.body;
         var rol = body.getAttribute('data-user-rol');
 
-        if (rol === 'profesor') {
+        if (rol === 'admin') {
+            HeroicosSync.prefetchAdminData().then(function (ok) {
+                if (ok) console.log('[HeroicosOffline] Admin data prefetched');
+            });
+        } else if (rol === 'profesor') {
             HeroicosSync.prefetchProfesorData().then(function (ok) {
                 if (ok) console.log('[HeroicosOffline] Profesor data prefetched');
             });

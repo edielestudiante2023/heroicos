@@ -183,6 +183,13 @@
                 </div>
             </div>
 
+            <!-- SCREEN: Admin cached data -->
+            <div id="screenAdmin" class="screen">
+                <h5 class="mb-3"><i class="bi bi-speedometer2 me-2"></i>Dashboard Admin</h5>
+                <small class="text-muted d-block mb-3">Datos cacheados - Modo offline</small>
+                <div id="adminData"></div>
+            </div>
+
             <!-- SCREEN: Acudiente cached data -->
             <div id="screenAcudiente" class="screen">
                 <h5 class="mb-3"><i class="bi bi-person-badge me-2"></i>Mi Resumen</h5>
@@ -240,7 +247,9 @@
                 }
                 session = sess;
 
-                if (sess.rol_nombre === 'profesor') {
+                if (sess.rol_nombre === 'admin') {
+                    return loadAdminView(sess);
+                } else if (sess.rol_nombre === 'profesor') {
                     return loadProfesorView(sess);
                 } else if (sess.rol_nombre === 'acudiente') {
                     return loadAcudienteView(sess);
@@ -275,12 +284,99 @@
 
             // Update header title
             var titles = {
+                screenAdmin: 'Dashboard Admin',
                 screenGrupos: 'Mis Grupos',
                 screenAttendance: 'Tomar Asistencia',
                 screenAcudiente: 'Mi Resumen'
             };
             document.getElementById('headerTitle').textContent = titles[screenId] || 'Academia Heroicos';
         };
+
+        // =====================================================================
+        // ADMIN VIEW
+        // =====================================================================
+
+        function loadAdminView(sess) {
+            var cacheKey = 'admin_dashboard_' + sess.user_id;
+
+            return HeroicosDB.getCachedData(cacheKey).then(function(cached) {
+                if (!cached || !cached.data) {
+                    showFallback('No hay datos de admin cacheados. Abre la app con conexion primero.');
+                    return;
+                }
+
+                var data = cached.data;
+                showAppShell();
+                showScreen('screenAdmin');
+
+                var container = document.getElementById('adminData');
+                var html = '';
+
+                // Stats cards
+                if (data.stats) {
+                    var s = data.stats;
+                    html += '<div class="row g-3 mb-4">' +
+                        '<div class="col-6 col-md-4"><div class="card p-3 text-center">' +
+                        '  <div class="fs-3 fw-bold" style="color:var(--heroicos-primary)">' + (s.total_estudiantes || 0) + '</div>' +
+                        '  <small class="text-muted">Estudiantes</small>' +
+                        '</div></div>' +
+                        '<div class="col-6 col-md-4"><div class="card p-3 text-center">' +
+                        '  <div class="fs-3 fw-bold" style="color:#0dcaf0">' + (s.total_profesores || 0) + '</div>' +
+                        '  <small class="text-muted">Profesores</small>' +
+                        '</div></div>' +
+                        '<div class="col-6 col-md-4"><div class="card p-3 text-center">' +
+                        '  <div class="fs-3 fw-bold" style="color:#ffc107">' + (s.total_grupos || 0) + '</div>' +
+                        '  <small class="text-muted">Grupos Activos</small>' +
+                        '</div></div>' +
+                        '<div class="col-6 col-md-4"><div class="card p-3 text-center">' +
+                        '  <div class="fs-3 fw-bold text-danger">$' + Math.round(s.total_por_cobrar || 0).toLocaleString() + '</div>' +
+                        '  <small class="text-muted">Cartera</small>' +
+                        '</div></div>' +
+                        '<div class="col-6 col-md-4"><div class="card p-3 text-center">' +
+                        '  <div class="fs-3 fw-bold text-warning">' + (s.pagos_pendientes || 0) + '</div>' +
+                        '  <small class="text-muted">Pagos por Revisar</small>' +
+                        '</div></div>' +
+                        '</div>';
+                }
+
+                // Groups
+                if (data.grupos && data.grupos.length > 0) {
+                    html += '<h6 class="mb-2"><i class="bi bi-collection me-1"></i>Grupos (' + data.grupos.length + ')</h6>';
+                    html += '<div class="list-group mb-3">';
+                    data.grupos.forEach(function(g) {
+                        html += '<div class="list-group-item d-flex justify-content-between align-items-center">' +
+                                '<div><strong>' + escHtml(g.nombre) + '</strong>' +
+                                '<br><small class="text-muted">' + escHtml(g.categoria_nombre || '') + '</small></div>' +
+                                '<span class="badge bg-primary rounded-pill">' + (g.inscritos || 0) + '/' + (g.cupo_maximo || '?') + '</span>' +
+                                '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                // Recent payments pending
+                if (data.pagos_recientes && data.pagos_recientes.length > 0) {
+                    html += '<h6 class="mb-2"><i class="bi bi-credit-card me-1"></i>Pagos Pendientes de Revision</h6>';
+                    html += '<div class="list-group mb-3">';
+                    data.pagos_recientes.forEach(function(p) {
+                        html += '<div class="list-group-item d-flex justify-content-between align-items-center">' +
+                                '<div><strong>' + escHtml((p.acudiente_nombres || '') + ' ' + (p.acudiente_apellidos || '')) + '</strong>' +
+                                '<br><small class="text-muted">' + escHtml(p.numero_recibo || '') + ' - ' + (p.fecha_pago || '') + ' - ' + escHtml(p.metodo_pago || '') + '</small></div>' +
+                                '<span class="fw-bold text-success">$' + Math.round(p.valor_total || 0).toLocaleString() + '</span>' +
+                                '</div>';
+                    });
+                    html += '</div>';
+                }
+
+                // Freshness
+                if (cached.updatedAt) {
+                    var mins = Math.round((Date.now() - cached.updatedAt) / 60000);
+                    var label = mins < 1 ? 'hace menos de 1 min' : mins < 60 ? 'hace ' + mins + ' min' : 'hace ' + Math.round(mins / 60) + ' h';
+                    html += '<small class="text-muted d-block mt-3"><i class="bi bi-clock me-1"></i>Datos actualizados ' + label + '</small>';
+                }
+
+                container.innerHTML = html;
+            });
+        }
 
         // =====================================================================
         // PROFESOR VIEW
