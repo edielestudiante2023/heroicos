@@ -531,6 +531,39 @@
     <script src="<?= base_url('assets/js/heroicos-sync.js') ?>"></script>
     <script src="<?= base_url('assets/js/heroicos-offline.js') ?>"></script>
 
+    <!-- Inline connectivity override (bypasses stale SW cache) -->
+    <script>
+    (function () {
+        // Force clear old SW caches so new JS files are served
+        if ('caches' in window) {
+            caches.keys().then(function (names) {
+                names.forEach(function (name) {
+                    if (name !== 'heroicos-static-v5') {
+                        caches.delete(name);
+                        console.log('[Inline] Deleted old cache:', name);
+                    }
+                });
+            });
+        }
+
+        // Real connectivity check - hide banner if server is reachable
+        setTimeout(function () {
+            var banner = document.getElementById('heroicos-offline-banner');
+            if (!banner || banner.style.display === 'none') return;
+
+            console.log('[Inline] Banner visible, verifying connectivity...');
+            fetch('/api/offline/session-check', { method: 'GET', cache: 'no-store' })
+                .then(function (res) {
+                    console.log('[Inline] Server reachable (HTTP ' + res.status + '), hiding banner');
+                    banner.style.display = 'none';
+                })
+                .catch(function (err) {
+                    console.log('[Inline] Server unreachable:', err.message);
+                });
+        }, 1500);
+    })();
+    </script>
+
     <?= $this->renderSection('scripts') ?>
 </body>
 </html>
