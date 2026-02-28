@@ -13,6 +13,7 @@ class AuthFilter implements FilterInterface
      */
     public function before(RequestInterface $request, $arguments = null)
     {
+        helper('cookie');
         $session = session();
 
         // Check if user is logged in
