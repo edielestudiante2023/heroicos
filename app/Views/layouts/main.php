@@ -270,6 +270,9 @@
         .sidebar-overlay.show {
             display: block;
         }
+        /* Hide offline banner by default - only inline JS can show it after real check */
+        #heroicos-offline-banner { display: none !important; }
+        #heroicos-offline-banner.verified-offline { display: flex !important; }
     </style>
     <?= $this->renderSection('styles') ?>
 </head>
@@ -534,7 +537,7 @@
     <!-- Inline connectivity override (bypasses stale SW cache) -->
     <script>
     (function () {
-        // Force clear old SW caches so new JS files are served
+        // Force clear old SW caches so new JS files are served on next load
         if ('caches' in window) {
             caches.keys().then(function (names) {
                 names.forEach(function (name) {
@@ -546,21 +549,26 @@
             });
         }
 
-        // Real connectivity check - hide banner if server is reachable
-        setTimeout(function () {
-            var banner = document.getElementById('heroicos-offline-banner');
-            if (!banner || banner.style.display === 'none') return;
-
-            console.log('[Inline] Banner visible, verifying connectivity...');
-            fetch('/api/offline/session-check', { method: 'GET', cache: 'no-store' })
-                .then(function (res) {
-                    console.log('[Inline] Server reachable (HTTP ' + res.status + '), hiding banner');
-                    banner.style.display = 'none';
-                })
-                .catch(function (err) {
-                    console.log('[Inline] Server unreachable:', err.message);
-                });
-        }, 1500);
+        // Real connectivity check - only show banner if server is truly unreachable
+        // CSS !important hides the banner by default, old JS cannot override it.
+        // Only this inline code (served fresh) can show it via the CSS class.
+        fetch('/api/offline/session-check', { method: 'GET', cache: 'no-store' })
+            .then(function (res) {
+                console.log('[Inline] Server reachable (HTTP ' + res.status + ') - banner stays hidden');
+            })
+            .catch(function () {
+                console.log('[Inline] Server unreachable - showing offline banner');
+                // Wait for banner to be created by heroicos-offline.js, then add class
+                var attempts = 0;
+                var check = setInterval(function () {
+                    var banner = document.getElementById('heroicos-offline-banner');
+                    if (banner) {
+                        banner.classList.add('verified-offline');
+                        clearInterval(check);
+                    }
+                    if (++attempts > 20) clearInterval(check);
+                }, 250);
+            });
     })();
     </script>
 
