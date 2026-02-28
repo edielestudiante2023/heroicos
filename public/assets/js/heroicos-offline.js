@@ -237,6 +237,32 @@
     }
 
     // =========================================================================
+    // REAL CONNECTIVITY CHECK
+    // =========================================================================
+
+    /**
+     * navigator.onLine is unreliable on mobile. This does a real fetch
+     * to the session-check endpoint to verify actual server reachability.
+     * Falls back to navigator.onLine if fetch fails with a non-network error.
+     */
+    function checkRealConnectivity() {
+        // Quick bail: if browser says offline, trust it
+        if (!navigator.onLine) return Promise.resolve(false);
+
+        return fetch('/api/offline/session-check', {
+            method: 'GET',
+            cache: 'no-store',
+            signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined
+        }).then(function (res) {
+            // Any HTTP response means server is reachable
+            return true;
+        }).catch(function () {
+            // Network error = truly offline
+            return false;
+        });
+    }
+
+    // =========================================================================
     // STORAGE QUOTA
     // =========================================================================
 
@@ -281,21 +307,27 @@
                 createOfflineBanner();
                 createSyncBadge();
 
-                // Set initial state
-                if (!navigator.onLine) {
-                    showOfflineBanner();
-                }
+                // Set initial state using real connectivity check
+                checkRealConnectivity().then(function (isOnline) {
+                    if (!isOnline) {
+                        showOfflineBanner();
+                    }
+                });
                 updatePendingBadge();
 
                 // Online/Offline listeners
                 window.addEventListener('online', function () {
-                    hideOfflineBanner();
-                    showToast('Conexion restaurada.', 'success');
-
-                    // Auto-sync
-                    setTimeout(function () {
-                        HeroicosSync.processQueue().then(handleSyncResult);
-                    }, 1000);
+                    // Verify with real ping before hiding banner
+                    checkRealConnectivity().then(function (isOnline) {
+                        if (isOnline) {
+                            hideOfflineBanner();
+                            showToast('Conexion restaurada.', 'success');
+                            // Auto-sync
+                            setTimeout(function () {
+                                HeroicosSync.processQueue().then(handleSyncResult);
+                            }, 1000);
+                        }
+                    });
                 });
 
                 window.addEventListener('offline', function () {
