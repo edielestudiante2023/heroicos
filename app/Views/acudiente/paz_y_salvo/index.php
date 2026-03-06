@@ -1,29 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('sidebar') ?>
-<div class="nav-section">Principal</div>
-<a href="<?= site_url('acudiente/dashboard') ?>" class="nav-link">
-    <i class="bi bi-speedometer2"></i>
-    Dashboard
-</a>
-
-<div class="nav-section">Mis Hijos</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-people"></i>
-    Mis Estudiantes
-</a>
-
-<div class="nav-section">Pagos</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-wallet2"></i>
-    Estado de Cuenta
-</a>
-
-<div class="nav-section">Documentos</div>
-<a href="<?= site_url('acudiente/paz-y-salvo') ?>" class="nav-link active">
-    <i class="bi bi-file-earmark-check"></i>
-    Paz y Salvo
-</a>
+<?= $this->include('acudiente/partials/sidebar') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>

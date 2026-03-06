@@ -154,19 +154,27 @@ $routes->group('profesor', ['filter' => 'role:admin,profesor'], static function 
 $routes->group('acudiente', ['filter' => 'role:admin,acudiente'], static function ($routes) {
     $routes->get('dashboard', 'Acudiente\DashboardController::index');
 
+    // Mis Estudiantes
+    $routes->get('estudiantes', 'Acudiente\EstudiantesController::index');
+    $routes->get('estudiantes/(:num)', 'Acudiente\EstudiantesController::detalle/$1');
+
+    // Perfil
+    $routes->get('perfil', 'Acudiente\PerfilController::index');
+    $routes->post('perfil/actualizar', 'Acudiente\PerfilController::actualizar');
+    $routes->post('perfil/cambiar-password', 'Acudiente\PerfilController::cambiarPassword');
+
+    // Pagos
+    $routes->get('pagos', 'Acudiente\PagosController::index');
+    $routes->get('pagos/subir', 'Acudiente\PagosController::subir');
+    $routes->post('pagos/guardar', 'Acudiente\PagosController::guardar');
+
+    // Horarios
+    $routes->get('horarios', 'Acudiente\HorariosController::index');
+
     // Paz y Salvo
     $routes->get('paz-y-salvo', 'Acudiente\PazYSalvoController::index');
     $routes->post('paz-y-salvo/solicitar', 'Acudiente\PazYSalvoController::solicitar');
     $routes->get('paz-y-salvo/descargar/(:num)', 'Acudiente\PazYSalvoController::descargar/$1');
-
-    // My students (future)
-    // $routes->get('students', 'Acudiente\StudentController::index');
-
-    // Payments (future)
-    // $routes->get('payments', 'Acudiente\PaymentController::index');
-
-    // Enrollment (future)
-    // $routes->get('enrollment', 'Acudiente\EnrollmentController::index');
 });
 
 // ============================================================================

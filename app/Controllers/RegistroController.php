@@ -160,14 +160,22 @@ class RegistroController extends BaseController
                     ->with('error', 'Ocurrio un error al procesar el registro. Intente nuevamente.');
             }
 
-            // Send welcome email to acudiente
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            log_message('error', 'Error en registro: ' . $e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Ocurrio un error inesperado. Intente nuevamente.');
+        }
+
+        // Send emails outside transaction try-catch so failures don't show error page
+        try {
             $this->enviarEmailBienvenida(
                 $tokenData['email'],
                 $this->request->getPost('acud_nombres') . ' ' . $this->request->getPost('acud_apellidos'),
                 $passwordTemporal
             );
 
-            // Send new student email to admins + professor
             foreach ($estudiantesCreados as $est) {
                 $this->enviarEmailNuevoEstudiante(
                     $est['nombres'] . ' ' . $est['apellidos'],
@@ -176,18 +184,13 @@ class RegistroController extends BaseController
                     $tokenData['profesor_id']
                 );
             }
-
-            return $this->response->setBody(view('auth/registro_exito', [
-                'title' => 'Registro Exitoso - Academia Heroicos',
-            ]));
-
-        } catch (\Exception $e) {
-            $db->transRollback();
-            log_message('error', 'Error en registro: ' . $e->getMessage());
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Ocurrio un error inesperado. Intente nuevamente.');
+        } catch (\Throwable $e) {
+            log_message('error', 'Error enviando emails post-registro: ' . $e->getMessage());
         }
+
+        return $this->response->setBody(view('auth/registro_exito', [
+            'title' => 'Registro Exitoso - Academia Heroicos',
+        ]));
     }
 
     /**

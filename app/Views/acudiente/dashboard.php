@@ -1,51 +1,7 @@
 <?= $this->extend('layouts/main') ?>
 
 <?= $this->section('sidebar') ?>
-<div class="nav-section">Principal</div>
-<a href="<?= site_url('acudiente/dashboard') ?>" class="nav-link active">
-    <i class="bi bi-speedometer2"></i>
-    Dashboard
-</a>
-
-<div class="nav-section">Mis Hijos</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-people"></i>
-    Mis Estudiantes
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-calendar3"></i>
-    Horarios
-</a>
-
-<div class="nav-section">Pagos</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-wallet2"></i>
-    Estado de Cuenta
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-cash-stack"></i>
-    Registrar Pago
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-file-earmark-text"></i>
-    Historial
-</a>
-
-<div class="nav-section">Documentos</div>
-<a href="<?= site_url('acudiente/paz-y-salvo') ?>" class="nav-link">
-    <i class="bi bi-file-earmark-check"></i>
-    Paz y Salvo
-</a>
-
-<div class="nav-section">Actividades</div>
-<a href="#" class="nav-link">
-    <i class="bi bi-trophy"></i>
-    Torneos
-</a>
-<a href="#" class="nav-link">
-    <i class="bi bi-person-video3"></i>
-    Solicitar Clase Privada
-</a>
+<?= $this->include('acudiente/partials/sidebar') ?>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
@@ -125,7 +81,7 @@
                 <?php else: ?>
                     <div class="list-group list-group-flush">
                         <?php foreach ($mis_estudiantes as $estudiante): ?>
-                        <a href="#" class="list-group-item list-group-item-action">
+                        <a href="<?= site_url('acudiente/estudiantes/' . $estudiante['id']) ?>" class="list-group-item list-group-item-action">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong><?= esc($estudiante['nombres'] . ' ' . $estudiante['apellidos']) ?></strong>
@@ -148,7 +104,7 @@
         <div class="table-card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <span><i class="bi bi-clock-history me-2"></i>Pagos Recientes</span>
-                <a href="#" class="btn btn-sm btn-outline-primary">Ver historial</a>
+                <a href="<?= site_url('acudiente/pagos') ?>" class="btn btn-sm btn-outline-primary">Ver historial</a>
             </div>
             <div class="card-body p-0">
                 <?php if (empty($pagos_recientes)): ?>
@@ -211,17 +167,17 @@
             </div>
             <div class="card-body">
                 <div class="d-flex flex-wrap gap-2">
-                    <a href="#" class="btn btn-primary">
+                    <a href="<?= site_url('acudiente/pagos/subir') ?>" class="btn btn-primary">
                         <i class="bi bi-cash-stack me-2"></i>Registrar Pago
                     </a>
-                    <a href="#" class="btn btn-success">
+                    <a href="<?= site_url('acudiente/pagos') ?>" class="btn btn-success">
                         <i class="bi bi-file-earmark-text me-2"></i>Ver Estado de Cuenta
                     </a>
-                    <a href="#" class="btn btn-info text-white">
+                    <a href="<?= site_url('acudiente/horarios') ?>" class="btn btn-info text-white">
                         <i class="bi bi-calendar3 me-2"></i>Ver Horarios
                     </a>
-                    <a href="#" class="btn btn-warning">
-                        <i class="bi bi-person-video3 me-2"></i>Solicitar Clase Privada
+                    <a href="<?= site_url('acudiente/estudiantes') ?>" class="btn btn-warning">
+                        <i class="bi bi-people me-2"></i>Mis Estudiantes
                     </a>
                 </div>
             </div>
