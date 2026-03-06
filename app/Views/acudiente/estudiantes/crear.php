@@ -23,6 +23,14 @@
                 <form action="<?= site_url('acudiente/estudiantes/guardar') ?>" method="post" enctype="multipart/form-data">
                     <?= csrf_field() ?>
 
+                    <!-- Fotografia -->
+                    <h6 class="section-title"><i class="bi bi-camera me-2"></i>Fotografia</h6>
+                    <div class="mb-3">
+                        <label class="form-label small">Foto del estudiante <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control form-control-sm" name="foto" accept="image/*" required>
+                        <div class="form-text" style="font-size: 0.75rem;">Foto reciente tipo documento. Max 2MB. JPG o PNG.</div>
+                    </div>
+
                     <!-- Datos Personales -->
                     <h6 class="section-title"><i class="bi bi-person me-2"></i>Datos Personales</h6>
 
@@ -52,7 +60,7 @@
                         <div class="col-7">
                             <label class="form-label small">Numero Doc.</label>
                             <input type="text" class="form-control form-control-sm" name="numero_documento"
-                                   value="<?= old('numero_documento') ?>">
+                                   value="<?= old('numero_documento') ?>" inputmode="numeric" pattern="[0-9]*">
                         </div>
                     </div>
 
@@ -158,14 +166,6 @@
                         </div>
                     </div>
 
-                    <!-- Fotografia -->
-                    <h6 class="section-title mt-4"><i class="bi bi-camera me-2"></i>Fotografia</h6>
-                    <div class="mb-2">
-                        <label class="form-label small">Foto del estudiante <span class="text-danger">*</span></label>
-                        <input type="file" class="form-control form-control-sm" name="foto" accept="image/*" required>
-                        <div class="form-text" style="font-size: 0.75rem;">Foto reciente tipo documento. Max 2MB. JPG o PNG.</div>
-                    </div>
-
                     <!-- Autorizacion de Datos -->
                     <h6 class="section-title mt-4"><i class="bi bi-shield-check me-2"></i>Autorizacion de Tratamiento de Datos</h6>
                     <?= $this->include('partials/consentimiento_datos') ?>
@@ -185,6 +185,38 @@
 <?= $this->section('scripts') ?>
 <script>
 (function() {
+    var MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+    var fotoInput = document.querySelector('input[name="foto"]');
+
+    function validateFileSize(input) {
+        var feedback = input.parentElement.querySelector('.file-size-error');
+        if (!feedback) {
+            feedback = document.createElement('div');
+            feedback.className = 'file-size-error text-danger small mt-1';
+            input.parentElement.appendChild(feedback);
+        }
+        if (input.files.length > 0 && input.files[0].size > MAX_FILE_SIZE) {
+            feedback.textContent = 'La foto supera el tamaño maximo de 2MB. Por favor seleccione una imagen mas pequeña.';
+            input.classList.add('is-invalid');
+            return false;
+        }
+        feedback.textContent = '';
+        input.classList.remove('is-invalid');
+        return true;
+    }
+
+    if (fotoInput) {
+        fotoInput.addEventListener('change', function() { validateFileSize(this); });
+    }
+
+    // Block form submit if file too large
+    fotoInput.closest('form').addEventListener('submit', function(e) {
+        if (fotoInput && !validateFileSize(fotoInput)) {
+            e.preventDefault();
+            alert('La foto supera el tamaño maximo de 2MB.');
+        }
+    });
+
     var consentBoxes = document.querySelectorAll('.consent-checks input[type="checkbox"]');
     var submitBtn = document.getElementById('submitBtn');
 

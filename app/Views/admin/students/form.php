@@ -52,6 +52,27 @@
     <div class="row">
         <!-- Left Column - Personal Info -->
         <div class="col-lg-8">
+            <!-- Fotografia -->
+            <div class="table-card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Fotografia</h5>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($estudiante['foto'])): ?>
+                        <div class="mb-3">
+                            <img src="<?= base_url($estudiante['foto']) ?>" alt="Foto actual"
+                                 class="img-thumbnail" style="max-height: 150px;">
+                            <p class="form-text">Foto actual del estudiante</p>
+                        </div>
+                    <?php endif; ?>
+                    <div class="mb-0">
+                        <label for="foto" class="form-label"><?= !empty($estudiante['foto']) ? 'Cambiar foto' : 'Foto del estudiante' ?></label>
+                        <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
+                        <div class="form-text">Max 2MB. JPG, PNG o WebP.</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="table-card mb-4">
                 <div class="card-header bg-white">
                     <h5 class="mb-0"><i class="bi bi-person me-2"></i>Información Personal</h5>
@@ -84,7 +105,8 @@
                         <div class="col-md-4 mb-3">
                             <label for="numero_documento" class="form-label">Número Documento <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="numero_documento" name="numero_documento"
-                                   value="<?= old('numero_documento', $estudiante['numero_documento'] ?? '') ?>" required>
+                                   value="<?= old('numero_documento', $estudiante['numero_documento'] ?? '') ?>"
+                                   inputmode="numeric" pattern="[0-9]*" required>
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="sexo" class="form-label">Sexo <span class="text-danger">*</span></label>
@@ -237,26 +259,6 @@
                 </div>
             </div>
 
-            <!-- Fotografia -->
-            <div class="table-card mb-4">
-                <div class="card-header bg-white">
-                    <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Fotografia</h5>
-                </div>
-                <div class="card-body">
-                    <?php if (!empty($estudiante['foto'])): ?>
-                        <div class="mb-3">
-                            <img src="<?= base_url($estudiante['foto']) ?>" alt="Foto actual"
-                                 class="img-thumbnail" style="max-height: 150px;">
-                            <p class="form-text">Foto actual del estudiante</p>
-                        </div>
-                    <?php endif; ?>
-                    <div class="mb-0">
-                        <label for="foto" class="form-label"><?= !empty($estudiante['foto']) ? 'Cambiar foto' : 'Foto del estudiante' ?></label>
-                        <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
-                        <div class="form-text">Max 2MB. JPG, PNG o WebP.</div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Right Column - Status & Actions -->
@@ -315,6 +317,35 @@
 
 <?= $this->section('scripts') ?>
 <script>
+// Client-side file size validation (2MB max)
+(function() {
+    var MAX_FILE_SIZE = 2 * 1024 * 1024;
+    var fotoInput = document.getElementById('foto');
+    if (fotoInput) {
+        fotoInput.addEventListener('change', function() {
+            var feedback = this.parentElement.querySelector('.file-size-error');
+            if (!feedback) {
+                feedback = document.createElement('div');
+                feedback.className = 'file-size-error text-danger small mt-1';
+                this.parentElement.appendChild(feedback);
+            }
+            if (this.files.length > 0 && this.files[0].size > MAX_FILE_SIZE) {
+                feedback.textContent = 'La foto supera el tamaño maximo de 2MB. Por favor seleccione una imagen mas pequeña.';
+                this.classList.add('is-invalid');
+            } else {
+                feedback.textContent = '';
+                this.classList.remove('is-invalid');
+            }
+        });
+        fotoInput.closest('form').addEventListener('submit', function(e) {
+            if (fotoInput.files.length > 0 && fotoInput.files[0].size > MAX_FILE_SIZE) {
+                e.preventDefault();
+                alert('La foto supera el tamaño maximo de 2MB.');
+            }
+        });
+    }
+})();
+
 // Show/hide motivo retiro field
 document.getElementById('estado')?.addEventListener('change', function() {
     const motivoDiv = document.getElementById('motivoRetiroDiv');

@@ -24,16 +24,22 @@
     <!-- Datos del Acudiente -->
     <h6 class="section-title"><i class="bi bi-person me-2"></i>Datos del Acudiente</h6>
 
+    <?php
+        // Split nombre_acudiente into nombres and apellidos (professor enters them separately, stored as "Nombres Apellidos")
+        $nombreParts = explode(' ', trim($token['nombre_acudiente'] ?? ''), 2);
+        $defaultNombres = $nombreParts[0] ?? '';
+        $defaultApellidos = $nombreParts[1] ?? '';
+    ?>
     <div class="row g-2 mb-2">
         <div class="col-6">
             <label class="form-label small">Nombres *</label>
             <input type="text" class="form-control form-control-sm" name="acud_nombres"
-                   value="<?= old('acud_nombres', explode(' ', $token['nombre_acudiente'] ?? '')[0] ?? '') ?>" required>
+                   value="<?= old('acud_nombres', $defaultNombres) ?>" required>
         </div>
         <div class="col-6">
             <label class="form-label small">Apellidos *</label>
             <input type="text" class="form-control form-control-sm" name="acud_apellidos"
-                   value="<?= old('acud_apellidos') ?>" required>
+                   value="<?= old('acud_apellidos', $defaultApellidos) ?>" required>
         </div>
     </div>
 
@@ -55,7 +61,7 @@
         <div class="col-7">
             <label class="form-label small">Numero Doc. *</label>
             <input type="text" class="form-control form-control-sm" name="acud_numero_documento"
-                   value="<?= old('acud_numero_documento') ?>" required>
+                   value="<?= old('acud_numero_documento') ?>" inputmode="numeric" pattern="[0-9]*" required>
         </div>
     </div>
 
@@ -78,6 +84,11 @@
     <div id="studentsContainer">
         <div class="student-block" data-index="0">
             <strong class="d-block mb-2 small">Estudiante 1</strong>
+            <div class="mb-2">
+                <label class="form-label small">Fotografia del estudiante <span class="text-danger">*</span></label>
+                <input type="file" class="form-control form-control-sm" name="est_foto[]" accept="image/*" required>
+                <div class="form-text" style="font-size: 0.75rem;">Foto reciente tipo documento. Max 2MB. JPG o PNG.</div>
+            </div>
             <div class="row g-2 mb-2">
                 <div class="col-6">
                     <label class="form-label small">Nombres *</label>
@@ -100,7 +111,8 @@
                 </div>
                 <div class="col-7">
                     <label class="form-label small">Numero Doc.</label>
-                    <input type="text" class="form-control form-control-sm" name="est_numero_documento[]">
+                    <input type="text" class="form-control form-control-sm" name="est_numero_documento[]"
+                           inputmode="numeric" pattern="[0-9]*">
                 </div>
             </div>
             <div class="row g-2 mb-2">
@@ -145,17 +157,22 @@
                 </div>
                 <div class="col-4">
                     <label class="form-label small">RH</label>
-                    <input type="text" class="form-control form-control-sm" name="est_rh[]" placeholder="O+, A-...">
+                    <select class="form-select form-select-sm" name="est_rh[]">
+                        <option value="">Seleccione...</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                    </select>
                 </div>
             </div>
-            <div class="mb-2">
+            <div class="mb-0">
                 <label class="form-label small">EPS</label>
                 <input type="text" class="form-control form-control-sm" name="est_eps[]" placeholder="Nombre de la EPS">
-            </div>
-            <div class="mb-0">
-                <label class="form-label small">Fotografia del estudiante <span class="text-danger">*</span></label>
-                <input type="file" class="form-control form-control-sm" name="est_foto[]" accept="image/*" required>
-                <div class="form-text" style="font-size: 0.75rem;">Foto reciente tipo documento. Max 2MB. JPG o PNG.</div>
             </div>
         </div>
     </div>
@@ -178,6 +195,43 @@
 <?= $this->section('scripts') ?>
 <script>
 (function() {
+    var MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB
+
+    function validateFileSize(input) {
+        var feedback = input.parentElement.querySelector('.file-size-error');
+        if (!feedback) {
+            feedback = document.createElement('div');
+            feedback.className = 'file-size-error text-danger small mt-1';
+            input.parentElement.appendChild(feedback);
+        }
+        if (input.files.length > 0 && input.files[0].size > MAX_FILE_SIZE) {
+            feedback.textContent = 'La foto supera el tamaño maximo de 2MB. Por favor seleccione una imagen mas pequeña.';
+            input.classList.add('is-invalid');
+            return false;
+        }
+        feedback.textContent = '';
+        input.classList.remove('is-invalid');
+        return true;
+    }
+
+    // Validate all file inputs on form submit
+    document.getElementById('registroForm').addEventListener('submit', function(e) {
+        var fileInputs = this.querySelectorAll('input[type="file"]');
+        var valid = true;
+        fileInputs.forEach(function(input) {
+            if (!validateFileSize(input)) valid = false;
+        });
+        if (!valid) {
+            e.preventDefault();
+            alert('Una o mas fotos superan el tamaño maximo de 2MB.');
+        }
+    });
+
+    // Live validation on file change
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('input[type="file"]')) validateFileSize(e.target);
+    });
+
     let studentIndex = 1;
     const container = document.getElementById('studentsContainer');
     const addBtn = document.getElementById('addStudentBtn');
