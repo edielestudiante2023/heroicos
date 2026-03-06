@@ -29,34 +29,29 @@ class DashboardController extends BaseController
                               ->get()
                               ->getResultArray();
 
-        // Get pending payments from cartera
+        // Pending payments for this acudiente
         $pagos_pendientes = [];
         $saldo_total = 0;
 
-        foreach ($mis_estudiantes as $estudiante) {
-            $deudas = $db->table('cartera')
-                         ->where('estudiante_id', $estudiante['id'])
-                         ->where('saldo >', 0)
-                         ->get()
-                         ->getResultArray();
+        if ($acudienteId) {
+            $pagos_pendientes = $db->table('pagos')
+                                   ->where('acudiente_id', $acudienteId)
+                                   ->where('estado', 'pendiente_revision')
+                                   ->get()
+                                   ->getResultArray();
 
-            foreach ($deudas as $deuda) {
-                $deuda['estudiante_nombre'] = $estudiante['nombres'] . ' ' . $estudiante['apellidos'];
-                $pagos_pendientes[] = $deuda;
-                $saldo_total += $deuda['saldo'];
+            foreach ($pagos_pendientes as $pago) {
+                $saldo_total += (float) $pago['valor_total'];
             }
         }
 
-        // Get recent payments
-        $estudianteIds = array_column($mis_estudiantes, 'id');
+        // Recent payments for this acudiente
         $pagos_recientes = [];
 
-        if (!empty($estudianteIds)) {
+        if ($acudienteId) {
             $pagos_recientes = $db->table('pagos')
-                                  ->select('pagos.*, estudiantes.nombres as nombre, estudiantes.apellidos as apellido')
-                                  ->join('estudiantes', 'estudiantes.id = pagos.estudiante_id')
-                                  ->whereIn('pagos.estudiante_id', $estudianteIds)
-                                  ->orderBy('pagos.created_at', 'DESC')
+                                  ->where('acudiente_id', $acudienteId)
+                                  ->orderBy('created_at', 'DESC')
                                   ->limit(5)
                                   ->get()
                                   ->getResultArray();

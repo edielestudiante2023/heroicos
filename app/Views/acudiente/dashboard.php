@@ -128,9 +128,9 @@
                         <a href="#" class="list-group-item list-group-item-action">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong><?= esc($estudiante['nombre'] . ' ' . $estudiante['apellido']) ?></strong>
+                                    <strong><?= esc($estudiante['nombres'] . ' ' . $estudiante['apellidos']) ?></strong>
                                     <div class="small text-muted">
-                                        Categoría: <?= esc($estudiante['categoria'] ?? 'Sin asignar') ?>
+                                        Código: <?= esc($estudiante['codigo'] ?? 'Sin asignar') ?>
                                     </div>
                                 </div>
                                 <i class="bi bi-chevron-right"></i>
@@ -170,20 +170,26 @@
                                 <?php foreach ($pagos_recientes as $pago): ?>
                                 <tr>
                                     <td>
-                                        <?= esc($pago['nombre'] . ' ' . $pago['apellido']) ?>
-                                        <div class="small text-muted"><?= date('d/m/Y', strtotime($pago['created_at'])) ?></div>
+                                        Recibo #<?= esc($pago['numero_recibo'] ?? $pago['id']) ?>
+                                        <div class="small text-muted"><?= date('d/m/Y', strtotime($pago['fecha_pago'] ?? $pago['created_at'])) ?></div>
                                     </td>
-                                    <td>$<?= number_format($pago['monto'], 0, ',', '.') ?></td>
+                                    <td>$<?= number_format($pago['valor_total'], 0, ',', '.') ?></td>
                                     <td>
                                         <?php
                                         $badgeClass = match($pago['estado']) {
                                             'aprobado' => 'success',
-                                            'pendiente' => 'warning',
+                                            'pendiente_revision' => 'warning',
                                             'rechazado' => 'danger',
                                             default => 'secondary'
                                         };
+                                        $estadoLabel = match($pago['estado']) {
+                                            'aprobado' => 'Aprobado',
+                                            'pendiente_revision' => 'Pendiente',
+                                            'rechazado' => 'Rechazado',
+                                            default => ucfirst($pago['estado'])
+                                        };
                                         ?>
-                                        <span class="badge bg-<?= $badgeClass ?>"><?= ucfirst($pago['estado']) ?></span>
+                                        <span class="badge bg-<?= $badgeClass ?>"><?= $estadoLabel ?></span>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
