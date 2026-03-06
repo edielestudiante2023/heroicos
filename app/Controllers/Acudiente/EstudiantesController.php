@@ -169,6 +169,7 @@ class EstudiantesController extends BaseController
             'grupo_sanguineo'    => $this->request->getPost('grupo_sanguineo') ?: '',
             'alergias'           => $this->request->getPost('alergias'),
             'condiciones_medicas' => $this->request->getPost('condiciones_medicas'),
+            'medicamentos'       => $this->request->getPost('medicamentos'),
             'contacto_emergencia' => $this->request->getPost('contacto_emergencia'),
             'telefono_emergencia' => $this->request->getPost('telefono_emergencia'),
             'estado'             => 'activo',
