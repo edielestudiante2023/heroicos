@@ -5,6 +5,12 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
+<div class="d-flex justify-content-end mb-3">
+    <a href="<?= site_url('acudiente/estudiantes/crear') ?>" class="btn btn-primary">
+        <i class="bi bi-person-plus me-1"></i>Agregar Estudiante
+    </a>
+</div>
+
 <div class="row g-4">
     <?php if (empty($estudiantes)): ?>
         <div class="col-12">
@@ -12,7 +18,7 @@
                 <div class="card-body p-5 text-center text-muted">
                     <i class="bi bi-person-plus fs-1 d-block mb-3"></i>
                     <h5>No tiene estudiantes registrados</h5>
-                    <p>Los estudiantes se registran durante el proceso de inscripcion.</p>
+                    <p>Haga clic en "Agregar Estudiante" para registrar uno.</p>
                 </div>
             </div>
         </div>

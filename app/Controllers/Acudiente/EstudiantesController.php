@@ -3,6 +3,7 @@
 namespace App\Controllers\Acudiente;
 
 use App\Controllers\BaseController;
+use App\Models\StudentModel;
 
 class EstudiantesController extends BaseController
 {
@@ -121,5 +122,67 @@ class EstudiantesController extends BaseController
             'cargos'     => $cargos,
             'horarios'   => $horarios,
         ]);
+    }
+
+    public function crear()
+    {
+        return view('acudiente/estudiantes/crear', [
+            'title'     => 'Nuevo Estudiante - Academia Heroicos',
+            'pageTitle' => 'Registrar Estudiante',
+        ]);
+    }
+
+    public function guardar()
+    {
+        $db = \Config\Database::connect();
+        $userId = session()->get('user_id');
+
+        $acudiente = $db->table('acudientes')
+                        ->where('usuario_id', $userId)
+                        ->get()->getRowArray();
+
+        if (!$acudiente) {
+            return redirect()->to('acudiente/estudiantes')
+                ->with('error', 'Perfil de acudiente no encontrado.');
+        }
+
+        $rules = [
+            'nombres'          => 'required|min_length[2]|max_length[100]',
+            'apellidos'        => 'required|min_length[2]|max_length[100]',
+            'fecha_nacimiento' => 'required|valid_date',
+            'sexo'             => 'required|in_list[M,F]',
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Por favor complete los campos obligatorios correctamente.');
+        }
+
+        $studentModel = new StudentModel();
+        $codigo = $studentModel->generateCode();
+
+        $db->table('estudiantes')->insert([
+            'acudiente_id'       => $acudiente['id'],
+            'codigo'             => $codigo,
+            'nombres'            => $this->request->getPost('nombres'),
+            'apellidos'          => $this->request->getPost('apellidos'),
+            'tipo_documento'     => $this->request->getPost('tipo_documento') ?: 'TI',
+            'numero_documento'   => $this->request->getPost('numero_documento') ?: '',
+            'fecha_nacimiento'   => $this->request->getPost('fecha_nacimiento'),
+            'sexo'               => $this->request->getPost('sexo'),
+            'eps'                => $this->request->getPost('eps') ?: '',
+            'grupo_sanguineo'    => $this->request->getPost('grupo_sanguineo') ?: '',
+            'alergias'           => $this->request->getPost('alergias'),
+            'condiciones_medicas' => $this->request->getPost('condiciones_medicas'),
+            'contacto_emergencia' => $this->request->getPost('contacto_emergencia'),
+            'telefono_emergencia' => $this->request->getPost('telefono_emergencia'),
+            'estado'             => 'activo',
+            'fecha_ingreso'      => date('Y-m-d'),
+            'created_at'         => date('Y-m-d H:i:s'),
+            'updated_at'         => date('Y-m-d H:i:s'),
+        ]);
+
+        return redirect()->to('acudiente/estudiantes')
+            ->with('message', 'Estudiante registrado exitosamente.');
     }
 }

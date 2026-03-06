@@ -156,6 +156,8 @@ $routes->group('acudiente', ['filter' => 'role:admin,acudiente'], static functio
 
     // Mis Estudiantes
     $routes->get('estudiantes', 'Acudiente\EstudiantesController::index');
+    $routes->get('estudiantes/crear', 'Acudiente\EstudiantesController::crear');
+    $routes->post('estudiantes/guardar', 'Acudiente\EstudiantesController::guardar');
     $routes->get('estudiantes/(:num)', 'Acudiente\EstudiantesController::detalle/$1');
 
     // Perfil
