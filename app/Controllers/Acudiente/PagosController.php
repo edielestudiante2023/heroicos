@@ -151,11 +151,8 @@ class PagosController extends BaseController
 
         try {
             // Generate receipt number
-            $lastRecibo = $db->table('pagos')
-                ->selectMax('id')
-                ->get()->getRowArray();
-            $nextNum = ($lastRecibo['id'] ?? 0) + 1;
-            $numeroRecibo = 'REC-' . date('Y') . '-' . str_pad($nextNum, 5, '0', STR_PAD_LEFT);
+            $pagoModel = new \App\Models\PagoModel();
+            $numeroRecibo = $pagoModel->generateNumeroRecibo();
 
             // Create payment
             $db->table('pagos')->insert([

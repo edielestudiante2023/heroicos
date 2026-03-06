@@ -38,7 +38,10 @@ class HorariosController extends BaseController
                 ->join('horarios h', 'h.id = gh.horario_id')
                 ->join('grupos g', 'g.id = gh.grupo_id')
                 ->where('gh.grupo_id', $inscripcion['grupo_id'])
-                ->where('gh.vigente_hasta IS NULL OR gh.vigente_hasta >=', date('Y-m-d'))
+                ->groupStart()
+                    ->where('gh.vigente_hasta IS NULL', null, false)
+                    ->orWhere('gh.vigente_hasta >=', date('Y-m-d'))
+                ->groupEnd()
                 ->orderBy('h.dia_semana', 'ASC')
                 ->orderBy('h.hora_inicio', 'ASC')
                 ->get()->getResultArray();

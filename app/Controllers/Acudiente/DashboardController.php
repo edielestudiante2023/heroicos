@@ -29,7 +29,7 @@ class DashboardController extends BaseController
                               ->get()
                               ->getResultArray();
 
-        // Pending payments for this acudiente
+        // Calculate real pending balance from cargos
         $pagos_pendientes = [];
         $saldo_total = 0;
 
@@ -40,8 +40,13 @@ class DashboardController extends BaseController
                                    ->get()
                                    ->getResultArray();
 
-            foreach ($pagos_pendientes as $pago) {
-                $saldo_total += (float) $pago['valor_total'];
+            foreach ($mis_estudiantes as $est) {
+                $saldo = $db->table('cargos')
+                    ->selectSum('saldo_pendiente')
+                    ->where('estudiante_id', $est['id'])
+                    ->whereIn('estado', ['pendiente', 'parcial'])
+                    ->get()->getRowArray();
+                $saldo_total += (float) ($saldo['saldo_pendiente'] ?? 0);
             }
         }
 

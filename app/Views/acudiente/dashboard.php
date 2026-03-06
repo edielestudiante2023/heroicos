@@ -11,7 +11,7 @@
     <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
     <div>
         <strong>Saldo pendiente:</strong> $<?= number_format($saldo_total, 0, ',', '.') ?>
-        <a href="#" class="alert-link ms-2">Ver detalles</a>
+        <a href="<?= site_url('acudiente/pagos') ?>" class="alert-link ms-2">Ver detalles</a>
     </div>
 </div>
 <?php endif; ?>

@@ -337,7 +337,13 @@
                     </div>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
+                    <?php
+                        $perfilUrl = '#';
+                        $rolNombre = session()->get('rol_nombre');
+                        if ($rolNombre === 'acudiente') $perfilUrl = site_url('acudiente/perfil');
+                        elseif ($rolNombre === 'admin' || $rolNombre === 'administrador') $perfilUrl = site_url('admin/configuracion');
+                    ?>
+                    <li><a class="dropdown-item" href="<?= $perfilUrl ?>"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="<?= site_url('logout') ?>"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
                 </ul>

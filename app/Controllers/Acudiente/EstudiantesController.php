@@ -77,7 +77,7 @@ class EstudiantesController extends BaseController
 
         // Get active inscription
         $inscripcion = $db->table('inscripciones i')
-            ->select('g.nombre as grupo_nombre, c.nombre as categoria_nombre')
+            ->select('g.nombre as grupo_nombre, c.nombre as categoria_nombre, i.grupo_id')
             ->join('grupos g', 'g.id = i.grupo_id')
             ->join('categorias c', 'c.id = g.categoria_id')
             ->where('i.estudiante_id', $id)
@@ -98,21 +98,16 @@ class EstudiantesController extends BaseController
         // Get horarios through inscription
         $horarios = [];
         if ($inscripcion) {
-            $grupoId = $db->table('inscripciones')
-                ->select('grupo_id')
-                ->where('estudiante_id', $id)
-                ->where('estado', 'activa')
-                ->get()->getRowArray();
-
-            if ($grupoId) {
-                $horarios = $db->table('grupo_horarios gh')
-                    ->select('h.*')
-                    ->join('horarios h', 'h.id = gh.horario_id')
-                    ->where('gh.grupo_id', $grupoId['grupo_id'])
-                    ->where('gh.vigente_hasta IS NULL OR gh.vigente_hasta >=', date('Y-m-d'))
-                    ->orderBy('h.dia_semana', 'ASC')
-                    ->get()->getResultArray();
-            }
+            $horarios = $db->table('grupo_horarios gh')
+                ->select('h.*')
+                ->join('horarios h', 'h.id = gh.horario_id')
+                ->where('gh.grupo_id', $inscripcion['grupo_id'])
+                ->groupStart()
+                    ->where('gh.vigente_hasta IS NULL', null, false)
+                    ->orWhere('gh.vigente_hasta >=', date('Y-m-d'))
+                ->groupEnd()
+                ->orderBy('h.dia_semana', 'ASC')
+                ->get()->getResultArray();
         }
 
         return view('acudiente/estudiantes/detalle', [

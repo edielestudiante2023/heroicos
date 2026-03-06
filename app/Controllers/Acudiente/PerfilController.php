@@ -90,6 +90,11 @@ class PerfilController extends BaseController
                       ->where('id', $userId)
                       ->get()->getRowArray();
 
+        if (!$usuario) {
+            return redirect()->back()
+                ->with('error', 'Usuario no encontrado.');
+        }
+
         if (!password_verify($this->request->getPost('password_actual'), $usuario['password'])) {
             return redirect()->back()
                 ->with('error', 'La contraseña actual es incorrecta.');
