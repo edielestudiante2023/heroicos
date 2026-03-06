@@ -447,6 +447,57 @@ class UserController extends BaseController
     }
 
     /**
+     * Send credentials email to existing user (generates temp password)
+     */
+    public function sendCredentials($id)
+    {
+        $usuario = $this->userModel->getUserWithRole($id);
+
+        if (!$usuario) {
+            return redirect()->to('/admin/users')
+                           ->with('error', 'Usuario no encontrado.');
+        }
+
+        try {
+            // Generate temporary password
+            $tempPassword = 'Hero' . rand(1000, 9999) . '!';
+
+            // Update password in database
+            $this->userModel->update($id, [
+                'password'   => $tempPassword,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            // Get profile name
+            $profile = $this->userModel->getProfileData($id, $usuario['rol_nombre']);
+            $nombre = $profile['nombres'] ?? $profile['nombre'] ?? $usuario['email'];
+
+            // Send email with credentials
+            $sendgrid = new \App\Libraries\SendGridService();
+            $sendgrid->enviar(
+                ['email' => $usuario['email'], 'nombre' => $nombre],
+                'bienvenida',
+                [
+                    'nombre'            => $nombre,
+                    'email'             => $usuario['email'],
+                    'password_temporal' => $tempPassword,
+                ]
+            );
+
+            // Log action
+            $this->logAction('SEND_CREDENTIALS', 'usuarios', $id);
+
+            return redirect()->to('/admin/users')
+                           ->with('message', 'Credenciales enviadas por email a ' . $usuario['email']);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Error enviando credenciales: ' . $e->getMessage());
+            return redirect()->to('/admin/users')
+                           ->with('error', 'Error al enviar credenciales: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Send welcome email with credentials to newly created user
      */
     protected function enviarEmailBienvenida(string $email, string $nombres, string $password, string $rol): void

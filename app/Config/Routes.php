@@ -48,6 +48,7 @@ $routes->group('admin', ['filter' => 'role:admin'], static function ($routes) {
     $routes->get('users/(:num)/edit', 'Admin\UserController::edit/$1');
     $routes->put('users/(:num)', 'Admin\UserController::update/$1');
     $routes->delete('users/(:num)', 'Admin\UserController::delete/$1');
+    $routes->post('users/(:num)/send-credentials', 'Admin\UserController::sendCredentials/$1');
 
     // Students management
     $routes->get('students', 'Admin\StudentController::index');

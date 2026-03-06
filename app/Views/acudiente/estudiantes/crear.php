@@ -40,21 +40,6 @@
                     </div>
 
                     <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <label class="form-label small">Fecha Nac. *</label>
-                            <input type="date" class="form-control form-control-sm" name="fecha_nacimiento"
-                                   value="<?= old('fecha_nacimiento') ?>" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small">Sexo *</label>
-                            <select class="form-select form-select-sm" name="sexo" required>
-                                <option value="M" <?= old('sexo') === 'M' ? 'selected' : '' ?>>Masculino</option>
-                                <option value="F" <?= old('sexo') === 'F' ? 'selected' : '' ?>>Femenino</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row g-2 mb-2">
                         <div class="col-5">
                             <label class="form-label small">Tipo Doc.</label>
                             <select class="form-select form-select-sm" name="tipo_documento">
@@ -68,6 +53,21 @@
                             <label class="form-label small">Numero Doc.</label>
                             <input type="text" class="form-control form-control-sm" name="numero_documento"
                                    value="<?= old('numero_documento') ?>">
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small">Fecha Nac. *</label>
+                            <input type="date" class="form-control form-control-sm" name="fecha_nacimiento"
+                                   value="<?= old('fecha_nacimiento') ?>" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">Sexo *</label>
+                            <select class="form-select form-select-sm" name="sexo" required>
+                                <option value="M" <?= old('sexo') === 'M' ? 'selected' : '' ?>>Masculino</option>
+                                <option value="F" <?= old('sexo') === 'F' ? 'selected' : '' ?>>Femenino</option>
+                            </select>
                         </div>
                     </div>
 

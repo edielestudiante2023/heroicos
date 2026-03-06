@@ -126,6 +126,11 @@
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <?php if ($usuario['id'] != session()->get('user_id')): ?>
+                                    <button type="button" class="btn btn-outline-success"
+                                            onclick="confirmSendCredentials(<?= $usuario['id'] ?>, '<?= esc($usuario['email']) ?>')"
+                                            title="Enviar credenciales por email">
+                                        <i class="bi bi-envelope"></i>
+                                    </button>
                                     <button type="button" class="btn btn-outline-danger"
                                             onclick="confirmDelete(<?= $usuario['id'] ?>, '<?= esc($usuario['email']) ?>')"
                                             title="Eliminar">
@@ -143,6 +148,34 @@
     </div>
     <div class="card-footer bg-white border-top">
         <small class="text-muted">Total: <?= count($usuarios) ?> usuarios</small>
+    </div>
+</div>
+
+<!-- Send Credentials Modal -->
+<div class="modal fade" id="sendCredentialsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Enviar Credenciales</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Se generará una <strong>nueva contraseña temporal</strong> y se enviará por email a <strong id="credentialsUserEmail"></strong>.</p>
+                <p class="text-warning mb-0">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    La contraseña actual del usuario será reemplazada.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="sendCredentialsForm" method="post" style="display:inline;">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-envelope me-1"></i>Enviar Credenciales
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -178,6 +211,12 @@
 
 <?= $this->section('scripts') ?>
 <script>
+function confirmSendCredentials(id, email) {
+    document.getElementById('credentialsUserEmail').textContent = email;
+    document.getElementById('sendCredentialsForm').action = '<?= site_url('admin/users') ?>/' + id + '/send-credentials';
+    new bootstrap.Modal(document.getElementById('sendCredentialsModal')).show();
+}
+
 function confirmDelete(id, email) {
     document.getElementById('deleteUserEmail').textContent = email;
     document.getElementById('deleteForm').action = '<?= site_url('admin/users') ?>/' + id;
