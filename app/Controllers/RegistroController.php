@@ -188,7 +188,7 @@ class RegistroController extends BaseController
                     'fecha_nacimiento'        => $estFechaNac[$i] ?? null,
                     'sexo'                    => $estSexo[$i] ?? 'M',
                     'tipo_documento'          => $estTipoDoc[$i] ?? 'TI',
-                    'numero_documento'        => $estNumDoc[$i] ?? '',
+                    'numero_documento'        => !empty($estNumDoc[$i]) ? $estNumDoc[$i] : null,
                     'foto'                    => $fotoPath,
                     'talla_camiseta'          => $estTallaCamiseta[$i] ?? null,
                     'talla_pantaloneta'       => $estTallaPant[$i] ?? null,
@@ -270,9 +270,10 @@ class RegistroController extends BaseController
             log_message('error', 'Error enviando emails post-registro: ' . $e->getMessage());
         }
 
-        return $this->response->setBody(view('auth/registro_exito', [
+        $this->response->setBody(view('auth/registro_exito', [
             'title' => 'Registro Exitoso - Academia Heroicos',
         ]));
+        return $this->response;
     }
 
     /**
