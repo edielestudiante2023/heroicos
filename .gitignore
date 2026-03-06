@@ -125,6 +125,7 @@ _modules/*
 #-------------------------
 # Deploy Scripts (Security)
 #-------------------------
+public/uploads/
 public/deploy.php
 public/sync_production.php
 public/migrate_production_sql.php

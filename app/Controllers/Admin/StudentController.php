@@ -104,6 +104,11 @@ class StudentController extends BaseController
                 'sexo'                => $this->request->getPost('sexo'),
                 'direccion'           => $this->request->getPost('direccion'),
                 'telefono'            => $this->request->getPost('telefono'),
+                'talla_camiseta'      => $this->request->getPost('talla_camiseta') ?: null,
+                'talla_pantaloneta'   => $this->request->getPost('talla_pantaloneta') ?: null,
+                'talla_medias'        => $this->request->getPost('talla_medias') ?: null,
+                'posicion'            => $this->request->getPost('posicion') ?: null,
+                'pie_dominante'       => $this->request->getPost('pie_dominante') ?: 'derecho',
                 'eps'                 => $this->request->getPost('eps'),
                 'grupo_sanguineo'     => $this->request->getPost('grupo_sanguineo'),
                 'alergias'            => $this->request->getPost('alergias'),
@@ -115,6 +120,18 @@ class StudentController extends BaseController
                 'fecha_ingreso'       => date('Y-m-d'),
                 'created_at'          => date('Y-m-d H:i:s'),
             ];
+
+            // Handle photo upload
+            $foto = $this->request->getFile('foto');
+            if ($foto && $foto->isValid() && !$foto->hasMoved()) {
+                $uploadPath = FCPATH . 'uploads/estudiantes';
+                if (!is_dir($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                $newName = $data['codigo'] . '_' . $foto->getRandomName();
+                $foto->move($uploadPath, $newName);
+                $data['foto'] = 'uploads/estudiantes/' . $newName;
+            }
 
             $this->studentModel->insert($data);
             $studentId = $this->studentModel->getInsertID();
@@ -232,6 +249,11 @@ class StudentController extends BaseController
                 'sexo'                => $this->request->getPost('sexo'),
                 'direccion'           => $this->request->getPost('direccion'),
                 'telefono'            => $this->request->getPost('telefono'),
+                'talla_camiseta'      => $this->request->getPost('talla_camiseta') ?: null,
+                'talla_pantaloneta'   => $this->request->getPost('talla_pantaloneta') ?: null,
+                'talla_medias'        => $this->request->getPost('talla_medias') ?: null,
+                'posicion'            => $this->request->getPost('posicion') ?: null,
+                'pie_dominante'       => $this->request->getPost('pie_dominante') ?: 'derecho',
                 'eps'                 => $this->request->getPost('eps'),
                 'grupo_sanguineo'     => $this->request->getPost('grupo_sanguineo'),
                 'alergias'            => $this->request->getPost('alergias'),
@@ -242,6 +264,18 @@ class StudentController extends BaseController
                 'estado'              => $this->request->getPost('estado'),
                 'updated_at'          => date('Y-m-d H:i:s'),
             ];
+
+            // Handle photo upload
+            $foto = $this->request->getFile('foto');
+            if ($foto && $foto->isValid() && !$foto->hasMoved()) {
+                $uploadPath = FCPATH . 'uploads/estudiantes';
+                if (!is_dir($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                $newName = $estudiante['codigo'] . '_' . $foto->getRandomName();
+                $foto->move($uploadPath, $newName);
+                $data['foto'] = 'uploads/estudiantes/' . $newName;
+            }
 
             // Handle retirement
             if ($data['estado'] === 'retirado' && $estudiante['estado'] !== 'retirado') {

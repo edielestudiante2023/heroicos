@@ -18,7 +18,7 @@
     </div>
 <?php endif; ?>
 
-<form action="<?= site_url('registro/' . $token['token']) ?>" method="POST" id="registroForm">
+<form action="<?= site_url('registro/' . $token['token']) ?>" method="POST" id="registroForm" enctype="multipart/form-data">
     <?= csrf_field() ?>
 
     <!-- Datos del Acudiente -->
@@ -148,9 +148,14 @@
                     <input type="text" class="form-control form-control-sm" name="est_rh[]" placeholder="O+, A-...">
                 </div>
             </div>
-            <div class="mb-0">
+            <div class="mb-2">
                 <label class="form-label small">EPS</label>
                 <input type="text" class="form-control form-control-sm" name="est_eps[]" placeholder="Nombre de la EPS">
+            </div>
+            <div class="mb-0">
+                <label class="form-label small">Fotografia del estudiante <span class="text-danger">*</span></label>
+                <input type="file" class="form-control form-control-sm" name="est_foto[]" accept="image/*" required>
+                <div class="form-text" style="font-size: 0.75rem;">Foto reciente tipo documento. Max 2MB. JPG o PNG.</div>
             </div>
         </div>
     </div>
@@ -159,7 +164,11 @@
         <i class="bi bi-plus-circle me-1"></i>Agregar otro estudiante
     </button>
 
-    <button type="submit" class="btn btn-primary w-100 py-2">
+    <!-- Autorizacion de Datos Personales -->
+    <h6 class="section-title"><i class="bi bi-shield-check me-2"></i>Autorizacion de Tratamiento de Datos</h6>
+    <?= $this->include('partials/consentimiento_datos') ?>
+
+    <button type="submit" class="btn btn-primary w-100 py-2" id="submitBtn" disabled>
         <i class="bi bi-check-circle me-2"></i>Completar Registro
     </button>
 </form>
@@ -212,6 +221,22 @@
         });
         studentIndex = blocks.length;
     }
+
+    // Enable submit only when all consent checkboxes are checked
+    var consentBoxes = document.querySelectorAll('.consent-checks input[type="checkbox"]');
+    var submitBtn = document.getElementById('submitBtn');
+
+    function checkConsent() {
+        var allChecked = true;
+        consentBoxes.forEach(function(cb) {
+            if (!cb.checked) allChecked = false;
+        });
+        submitBtn.disabled = !allChecked;
+    }
+
+    consentBoxes.forEach(function(cb) {
+        cb.addEventListener('change', checkConsent);
+    });
 })();
 </script>
 <?= $this->endSection() ?>

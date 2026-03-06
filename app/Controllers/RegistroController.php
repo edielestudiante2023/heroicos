@@ -47,6 +47,15 @@ class RegistroController extends BaseController
                 ->with('error', 'El enlace de inscripcion es invalido o ha expirado.');
         }
 
+        // Validate consent checkboxes
+        if (!$this->request->getPost('consent_datos_personales')
+            || !$this->request->getPost('consent_datos_menor')
+            || !$this->request->getPost('consent_imagen_menor')) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Debe aceptar todas las autorizaciones de tratamiento de datos para continuar.');
+        }
+
         // Validate acudiente fields
         $rules = [
             'acud_nombres'          => 'required|min_length[2]|max_length[100]',
@@ -61,6 +70,30 @@ class RegistroController extends BaseController
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Por favor complete todos los campos del acudiente correctamente.');
+        }
+
+        // Validate student photos
+        $fotos = $this->request->getFileMultiple('est_foto');
+        $estNombresCheck = $this->request->getPost('est_nombres');
+        if (!empty($estNombresCheck)) {
+            for ($i = 0; $i < count($estNombresCheck); $i++) {
+                if (empty($estNombresCheck[$i])) continue;
+                if (!isset($fotos[$i]) || !$fotos[$i]->isValid() || $fotos[$i]->hasMoved()) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'La fotografia del Estudiante ' . ($i + 1) . ' es obligatoria.');
+                }
+                if ($fotos[$i]->getSize() > 2 * 1024 * 1024) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'La foto del Estudiante ' . ($i + 1) . ' excede el limite de 2MB.');
+                }
+                if (!in_array($fotos[$i]->getMimeType(), ['image/jpeg', 'image/png', 'image/webp'])) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'La foto del Estudiante ' . ($i + 1) . ' debe ser JPG, PNG o WebP.');
+                }
+            }
         }
 
         // Validate at least one student
@@ -91,15 +124,18 @@ class RegistroController extends BaseController
 
             // Create acudiente
             $db->table('acudientes')->insert([
-                'usuario_id'       => $newUserId,
-                'nombres'          => $this->request->getPost('acud_nombres'),
-                'apellidos'        => $this->request->getPost('acud_apellidos'),
-                'tipo_documento'   => $this->request->getPost('acud_tipo_documento'),
-                'numero_documento' => $this->request->getPost('acud_numero_documento'),
-                'telefono'         => $this->request->getPost('acud_telefono'),
-                'direccion'        => $this->request->getPost('acud_direccion'),
-                'created_at'       => date('Y-m-d H:i:s'),
-                'updated_at'       => date('Y-m-d H:i:s'),
+                'usuario_id'         => $newUserId,
+                'nombres'            => $this->request->getPost('acud_nombres'),
+                'apellidos'          => $this->request->getPost('acud_apellidos'),
+                'tipo_documento'     => $this->request->getPost('acud_tipo_documento'),
+                'numero_documento'   => $this->request->getPost('acud_numero_documento'),
+                'telefono'           => $this->request->getPost('acud_telefono'),
+                'direccion'          => $this->request->getPost('acud_direccion'),
+                'autorizacion_datos' => 1,
+                'fecha_autorizacion' => date('Y-m-d H:i:s'),
+                'ip_autorizacion'    => $this->request->getIPAddress(),
+                'created_at'         => date('Y-m-d H:i:s'),
+                'updated_at'         => date('Y-m-d H:i:s'),
             ]);
             $acudienteId = $db->insertID();
 
@@ -118,40 +154,81 @@ class RegistroController extends BaseController
             $estPieDom        = $this->request->getPost('est_pie_dominante') ?? [];
             $estEps           = $this->request->getPost('est_eps') ?? [];
             $estRh            = $this->request->getPost('est_rh') ?? [];
+            $fotos            = $this->request->getFileMultiple('est_foto');
 
             $estudiantesCreados = [];
+            $ipAddress = $this->request->getIPAddress();
+            $userAgent = $this->request->getUserAgent()->getAgentString();
+            $consentVersion = $this->request->getPost('consent_version') ?? '1.0';
+            $nombreFirmante = $this->request->getPost('acud_nombres') . ' ' . $this->request->getPost('acud_apellidos');
+            $docFirmante = $this->request->getPost('acud_numero_documento');
 
             for ($i = 0; $i < count($estNombres); $i++) {
                 if (empty($estNombres[$i]) || empty($estApellidos[$i])) continue;
 
                 $codigo = $studentModel->generateCode();
 
+                // Handle photo upload
+                $fotoPath = '';
+                if (isset($fotos[$i]) && $fotos[$i]->isValid() && !$fotos[$i]->hasMoved()) {
+                    $uploadPath = FCPATH . 'uploads/estudiantes';
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+                    $newName = $codigo . '_' . $fotos[$i]->getRandomName();
+                    $fotos[$i]->move($uploadPath, $newName);
+                    $fotoPath = 'uploads/estudiantes/' . $newName;
+                }
+
                 $db->table('estudiantes')->insert([
-                    'acudiente_id'     => $acudienteId,
-                    'codigo'           => $codigo,
-                    'nombres'          => $estNombres[$i],
-                    'apellidos'        => $estApellidos[$i],
-                    'fecha_nacimiento' => $estFechaNac[$i] ?? null,
-                    'sexo'             => $estSexo[$i] ?? 'M',
-                    'tipo_documento'   => $estTipoDoc[$i] ?? 'TI',
-                    'numero_documento' => $estNumDoc[$i] ?? '',
-                    'talla_camiseta'   => $estTallaCamiseta[$i] ?? null,
-                    'talla_pantaloneta' => $estTallaPant[$i] ?? null,
-                    'talla_medias'     => $estTallaMedias[$i] ?? null,
-                    'posicion'         => $estPosicion[$i] ?? null,
-                    'pie_dominante'    => $estPieDom[$i] ?? 'derecho',
-                    'eps'              => $estEps[$i] ?? '',
-                    'grupo_sanguineo'  => $estRh[$i] ?? '',
-                    'estado'           => 'activo',
-                    'fecha_ingreso'    => date('Y-m-d'),
-                    'created_at'       => date('Y-m-d H:i:s'),
-                    'updated_at'       => date('Y-m-d H:i:s'),
+                    'acudiente_id'            => $acudienteId,
+                    'codigo'                  => $codigo,
+                    'nombres'                 => $estNombres[$i],
+                    'apellidos'               => $estApellidos[$i],
+                    'fecha_nacimiento'        => $estFechaNac[$i] ?? null,
+                    'sexo'                    => $estSexo[$i] ?? 'M',
+                    'tipo_documento'          => $estTipoDoc[$i] ?? 'TI',
+                    'numero_documento'        => $estNumDoc[$i] ?? '',
+                    'foto'                    => $fotoPath,
+                    'talla_camiseta'          => $estTallaCamiseta[$i] ?? null,
+                    'talla_pantaloneta'       => $estTallaPant[$i] ?? null,
+                    'talla_medias'            => $estTallaMedias[$i] ?? null,
+                    'posicion'                => $estPosicion[$i] ?? null,
+                    'pie_dominante'           => $estPieDom[$i] ?? 'derecho',
+                    'eps'                     => $estEps[$i] ?? '',
+                    'grupo_sanguineo'         => $estRh[$i] ?? '',
+                    'autorizacion_datos_menor' => 1,
+                    'fecha_autorizacion'      => date('Y-m-d H:i:s'),
+                    'ip_autorizacion'         => $ipAddress,
+                    'estado'                  => 'activo',
+                    'fecha_ingreso'           => date('Y-m-d'),
+                    'created_at'              => date('Y-m-d H:i:s'),
+                    'updated_at'              => date('Y-m-d H:i:s'),
                 ]);
 
                 $estudiantesCreados[] = [
                     'nombres'  => $estNombres[$i],
                     'apellidos' => $estApellidos[$i],
                 ];
+            }
+
+            // Store consent records for legal traceability
+            $consentTexto = 'Autorizacion tratamiento datos personales Academia Heroicos v' . $consentVersion;
+            $consentTypes = ['datos_personales', 'datos_menor', 'imagen_menor'];
+            foreach ($consentTypes as $tipo) {
+                $db->table('consentimientos')->insert([
+                    'acudiente_id'      => $acudienteId,
+                    'usuario_id'        => $newUserId,
+                    'tipo'              => $tipo,
+                    'version'           => $consentVersion,
+                    'texto_aceptado'    => $consentTexto,
+                    'aceptado'          => 1,
+                    'nombre_firmante'   => $nombreFirmante,
+                    'documento_firmante' => $docFirmante,
+                    'ip_address'        => $ipAddress,
+                    'user_agent'        => $userAgent,
+                    'created_at'        => date('Y-m-d H:i:s'),
+                ]);
             }
 
             // Mark token as used

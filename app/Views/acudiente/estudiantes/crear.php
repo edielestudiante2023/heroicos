@@ -20,7 +20,7 @@
         <div class="table-card">
             <div class="card-header"><i class="bi bi-person-plus me-2"></i>Registrar Nuevo Estudiante</div>
             <div class="card-body">
-                <form action="<?= site_url('acudiente/estudiantes/guardar') ?>" method="post">
+                <form action="<?= site_url('acudiente/estudiantes/guardar') ?>" method="post" enctype="multipart/form-data">
                     <?= csrf_field() ?>
 
                     <!-- Datos Personales -->
@@ -158,8 +158,20 @@
                         </div>
                     </div>
 
+                    <!-- Fotografia -->
+                    <h6 class="section-title mt-4"><i class="bi bi-camera me-2"></i>Fotografia</h6>
+                    <div class="mb-2">
+                        <label class="form-label small">Foto del estudiante <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control form-control-sm" name="foto" accept="image/*" required>
+                        <div class="form-text" style="font-size: 0.75rem;">Foto reciente tipo documento. Max 2MB. JPG o PNG.</div>
+                    </div>
+
+                    <!-- Autorizacion de Datos -->
+                    <h6 class="section-title mt-4"><i class="bi bi-shield-check me-2"></i>Autorizacion de Tratamiento de Datos</h6>
+                    <?= $this->include('partials/consentimiento_datos') ?>
+
                     <div class="mt-4">
-                        <button type="submit" class="btn btn-primary w-100 py-2">
+                        <button type="submit" class="btn btn-primary w-100 py-2" id="submitBtn" disabled>
                             <i class="bi bi-check-circle me-2"></i>Registrar Estudiante
                         </button>
                     </div>
@@ -168,4 +180,25 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+(function() {
+    var consentBoxes = document.querySelectorAll('.consent-checks input[type="checkbox"]');
+    var submitBtn = document.getElementById('submitBtn');
+
+    function checkConsent() {
+        var allChecked = true;
+        consentBoxes.forEach(function(cb) {
+            if (!cb.checked) allChecked = false;
+        });
+        submitBtn.disabled = !allChecked;
+    }
+
+    consentBoxes.forEach(function(cb) {
+        cb.addEventListener('change', checkConsent);
+    });
+})();
+</script>
 <?= $this->endSection() ?>

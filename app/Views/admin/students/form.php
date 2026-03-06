@@ -43,7 +43,7 @@
 
 <!-- Form -->
 <form action="<?= $action === 'create' ? site_url('admin/students') : site_url('admin/students/' . $estudiante['id']) ?>"
-      method="post">
+      method="post" enctype="multipart/form-data">
     <?= csrf_field() ?>
     <?php if ($action === 'update'): ?>
         <input type="hidden" name="_method" value="PUT">
@@ -171,6 +171,51 @@
                 </div>
             </div>
 
+            <!-- Datos Deportivos -->
+            <div class="table-card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-dribbble me-2"></i>Datos Deportivos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="talla_camiseta" class="form-label">Talla Camiseta</label>
+                            <input type="text" class="form-control" id="talla_camiseta" name="talla_camiseta"
+                                   placeholder="S, M, L..."
+                                   value="<?= old('talla_camiseta', $estudiante['talla_camiseta'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="talla_pantaloneta" class="form-label">Talla Pantaloneta</label>
+                            <input type="text" class="form-control" id="talla_pantaloneta" name="talla_pantaloneta"
+                                   placeholder="S, M, L..."
+                                   value="<?= old('talla_pantaloneta', $estudiante['talla_pantaloneta'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="talla_medias" class="form-label">Talla Medias</label>
+                            <input type="text" class="form-control" id="talla_medias" name="talla_medias"
+                                   placeholder="S, M, L..."
+                                   value="<?= old('talla_medias', $estudiante['talla_medias'] ?? '') ?>">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="posicion" class="form-label">Posicion</label>
+                            <input type="text" class="form-control" id="posicion" name="posicion"
+                                   placeholder="Delantero, Mediocampista..."
+                                   value="<?= old('posicion', $estudiante['posicion'] ?? '') ?>">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="pie_dominante" class="form-label">Pie Dominante</label>
+                            <select class="form-select" id="pie_dominante" name="pie_dominante">
+                                <option value="derecho" <?= old('pie_dominante', $estudiante['pie_dominante'] ?? 'derecho') === 'derecho' ? 'selected' : '' ?>>Derecho</option>
+                                <option value="izquierdo" <?= old('pie_dominante', $estudiante['pie_dominante'] ?? '') === 'izquierdo' ? 'selected' : '' ?>>Izquierdo</option>
+                                <option value="ambidiestro" <?= old('pie_dominante', $estudiante['pie_dominante'] ?? '') === 'ambidiestro' ? 'selected' : '' ?>>Ambidiestro</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Emergency Contact -->
             <div class="table-card mb-4">
                 <div class="card-header bg-white">
@@ -188,6 +233,27 @@
                             <input type="tel" class="form-control" id="telefono_emergencia" name="telefono_emergencia"
                                    value="<?= old('telefono_emergencia', $estudiante['telefono_emergencia'] ?? '') ?>">
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fotografia -->
+            <div class="table-card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-camera me-2"></i>Fotografia</h5>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($estudiante['foto'])): ?>
+                        <div class="mb-3">
+                            <img src="<?= base_url($estudiante['foto']) ?>" alt="Foto actual"
+                                 class="img-thumbnail" style="max-height: 150px;">
+                            <p class="form-text">Foto actual del estudiante</p>
+                        </div>
+                    <?php endif; ?>
+                    <div class="mb-0">
+                        <label for="foto" class="form-label"><?= !empty($estudiante['foto']) ? 'Cambiar foto' : 'Foto del estudiante' ?></label>
+                        <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
+                        <div class="form-text">Max 2MB. JPG, PNG o WebP.</div>
                     </div>
                 </div>
             </div>

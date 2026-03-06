@@ -141,6 +141,14 @@ class EstudiantesController extends BaseController
                 ->with('error', 'Perfil de acudiente no encontrado.');
         }
 
+        // Validate consent
+        if (!$this->request->getPost('consent_datos_personales')
+            || !$this->request->getPost('consent_datos_menor')
+            || !$this->request->getPost('consent_imagen_menor')) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Debe aceptar todas las autorizaciones de tratamiento de datos.');
+        }
+
         $rules = [
             'nombres'          => 'required|min_length[2]|max_length[100]',
             'apellidos'        => 'required|min_length[2]|max_length[100]',
@@ -153,35 +161,88 @@ class EstudiantesController extends BaseController
                 ->with('error', 'Por favor complete los campos obligatorios correctamente.');
         }
 
+        // Validate photo
+        $foto = $this->request->getFile('foto');
+        if (!$foto || !$foto->isValid() || $foto->hasMoved()) {
+            return redirect()->back()->withInput()
+                ->with('error', 'La fotografia del estudiante es obligatoria.');
+        }
+        if ($foto->getSize() > 2 * 1024 * 1024) {
+            return redirect()->back()->withInput()
+                ->with('error', 'La foto excede el limite de 2MB.');
+        }
+        if (!in_array($foto->getMimeType(), ['image/jpeg', 'image/png', 'image/webp'])) {
+            return redirect()->back()->withInput()
+                ->with('error', 'La foto debe ser JPG, PNG o WebP.');
+        }
+
         $studentModel = new StudentModel();
         $codigo = $studentModel->generateCode();
 
+        // Upload photo
+        $uploadPath = FCPATH . 'uploads/estudiantes';
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0755, true);
+        }
+        $newName = $codigo . '_' . $foto->getRandomName();
+        $foto->move($uploadPath, $newName);
+        $fotoPath = 'uploads/estudiantes/' . $newName;
+
+        $ipAddress = $this->request->getIPAddress();
+
         $db->table('estudiantes')->insert([
-            'acudiente_id'       => $acudiente['id'],
-            'codigo'             => $codigo,
-            'nombres'            => $this->request->getPost('nombres'),
-            'apellidos'          => $this->request->getPost('apellidos'),
-            'tipo_documento'     => $this->request->getPost('tipo_documento') ?: 'TI',
-            'numero_documento'   => $this->request->getPost('numero_documento') ?: '',
-            'fecha_nacimiento'   => $this->request->getPost('fecha_nacimiento'),
-            'sexo'               => $this->request->getPost('sexo'),
-            'talla_camiseta'     => $this->request->getPost('talla_camiseta') ?: null,
-            'talla_pantaloneta'  => $this->request->getPost('talla_pantaloneta') ?: null,
-            'talla_medias'       => $this->request->getPost('talla_medias') ?: null,
-            'posicion'           => $this->request->getPost('posicion') ?: null,
-            'pie_dominante'      => $this->request->getPost('pie_dominante') ?: 'derecho',
-            'eps'                => $this->request->getPost('eps') ?: '',
-            'grupo_sanguineo'    => $this->request->getPost('grupo_sanguineo') ?: '',
-            'alergias'           => $this->request->getPost('alergias'),
-            'condiciones_medicas' => $this->request->getPost('condiciones_medicas'),
-            'medicamentos'       => $this->request->getPost('medicamentos'),
-            'contacto_emergencia' => $this->request->getPost('contacto_emergencia'),
-            'telefono_emergencia' => $this->request->getPost('telefono_emergencia'),
-            'estado'             => 'activo',
-            'fecha_ingreso'      => date('Y-m-d'),
-            'created_at'         => date('Y-m-d H:i:s'),
-            'updated_at'         => date('Y-m-d H:i:s'),
+            'acudiente_id'            => $acudiente['id'],
+            'codigo'                  => $codigo,
+            'nombres'                 => $this->request->getPost('nombres'),
+            'apellidos'               => $this->request->getPost('apellidos'),
+            'tipo_documento'          => $this->request->getPost('tipo_documento') ?: 'TI',
+            'numero_documento'        => $this->request->getPost('numero_documento') ?: '',
+            'fecha_nacimiento'        => $this->request->getPost('fecha_nacimiento'),
+            'sexo'                    => $this->request->getPost('sexo'),
+            'foto'                    => $fotoPath,
+            'talla_camiseta'          => $this->request->getPost('talla_camiseta') ?: null,
+            'talla_pantaloneta'       => $this->request->getPost('talla_pantaloneta') ?: null,
+            'talla_medias'            => $this->request->getPost('talla_medias') ?: null,
+            'posicion'                => $this->request->getPost('posicion') ?: null,
+            'pie_dominante'           => $this->request->getPost('pie_dominante') ?: 'derecho',
+            'eps'                     => $this->request->getPost('eps') ?: '',
+            'grupo_sanguineo'         => $this->request->getPost('grupo_sanguineo') ?: '',
+            'alergias'                => $this->request->getPost('alergias'),
+            'condiciones_medicas'     => $this->request->getPost('condiciones_medicas'),
+            'medicamentos'            => $this->request->getPost('medicamentos'),
+            'contacto_emergencia'     => $this->request->getPost('contacto_emergencia'),
+            'telefono_emergencia'     => $this->request->getPost('telefono_emergencia'),
+            'autorizacion_datos_menor' => 1,
+            'fecha_autorizacion'      => date('Y-m-d H:i:s'),
+            'ip_autorizacion'         => $ipAddress,
+            'estado'                  => 'activo',
+            'fecha_ingreso'           => date('Y-m-d'),
+            'created_at'              => date('Y-m-d H:i:s'),
+            'updated_at'              => date('Y-m-d H:i:s'),
         ]);
+
+        // Store consent records
+        $consentVersion = $this->request->getPost('consent_version') ?? '1.0';
+        $nombreFirmante = $acudiente['nombres'] . ' ' . $acudiente['apellidos'];
+        $docFirmante = $acudiente['numero_documento'];
+        $userAgent = $this->request->getUserAgent()->getAgentString();
+        $consentTexto = 'Autorizacion tratamiento datos personales Academia Heroicos v' . $consentVersion;
+
+        foreach (['datos_personales', 'datos_menor', 'imagen_menor'] as $tipo) {
+            $db->table('consentimientos')->insert([
+                'acudiente_id'      => $acudiente['id'],
+                'usuario_id'        => $userId,
+                'tipo'              => $tipo,
+                'version'           => $consentVersion,
+                'texto_aceptado'    => $consentTexto,
+                'aceptado'          => 1,
+                'nombre_firmante'   => $nombreFirmante,
+                'documento_firmante' => $docFirmante,
+                'ip_address'        => $ipAddress,
+                'user_agent'        => $userAgent,
+                'created_at'        => date('Y-m-d H:i:s'),
+            ]);
+        }
 
         return redirect()->to('acudiente/estudiantes')
             ->with('message', 'Estudiante registrado exitosamente.');
