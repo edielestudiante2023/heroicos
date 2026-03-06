@@ -177,9 +177,9 @@ class RegistroController extends BaseController
                 );
             }
 
-            return view('auth/registro_exito', [
+            return $this->response->setBody(view('auth/registro_exito', [
                 'title' => 'Registro Exitoso - Academia Heroicos',
-            ]);
+            ]));
 
         } catch (\Exception $e) {
             $db->transRollback();

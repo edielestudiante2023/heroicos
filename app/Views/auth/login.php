@@ -2,6 +2,21 @@
 
 <?= $this->section('content') ?>
 
+<!-- PWA Install Alert -->
+<div id="pwaInstallAlert" class="alert alert-info d-none mb-3" role="alert" style="background: linear-gradient(135deg, #b720d2, #8a189e); border: none; color: white; border-radius: 12px; padding: 1rem;">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-phone-fill fs-3 me-3"></i>
+        <div class="flex-grow-1">
+            <strong class="d-block" style="font-size: 0.95rem;">Instala la app de Heroicos</strong>
+            <small id="pwaAlertDescription" style="opacity: 0.9;">Acceso directo desde tu pantalla de inicio, sin navegador.</small>
+        </div>
+        <button id="pwaAlertInstallBtn" class="btn btn-sm btn-light fw-bold ms-2" style="color: #b720d2; border-radius: 20px; white-space: nowrap;">
+            <i class="bi bi-download me-1"></i>Instalar
+        </button>
+    </div>
+    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-2" style="font-size: 0.6rem;" aria-label="Cerrar" onclick="dismissPwaAlert()"></button>
+</div>
+
 <h2 class="text-center mb-4">Iniciar Sesión</h2>
 
 <?php if (session()->getFlashdata('error')): ?>
@@ -96,5 +111,57 @@ document.getElementById('togglePassword').addEventListener('click', function() {
         icon.classList.replace('bi-eye-slash', 'bi-eye');
     }
 });
+
+// PWA Install Alert Logic
+(function() {
+    const alert = document.getElementById('pwaInstallAlert');
+    const installBtn = document.getElementById('pwaAlertInstallBtn');
+    const description = document.getElementById('pwaAlertDescription');
+    if (!alert) return;
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const wasDismissed = sessionStorage.getItem('pwa-alert-dismissed');
+    if (isStandalone || wasDismissed) return;
+
+    let deferredPrompt = null;
+
+    // Android/Chrome: capture install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        alert.classList.remove('d-none');
+    });
+
+    // iOS: show manual instructions
+    const isIOS = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
+    if (isIOS) {
+        description.innerHTML = 'Toca <i class="bi bi-box-arrow-up"></i> <strong>Compartir</strong> y luego <strong>"Agregar a inicio"</strong>';
+        installBtn.style.display = 'none';
+        alert.classList.remove('d-none');
+    }
+
+    // Install button click
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    alert.classList.add('d-none');
+                }
+                deferredPrompt = null;
+            }
+        });
+    }
+
+    window.addEventListener('appinstalled', () => {
+        alert.classList.add('d-none');
+    });
+})();
+
+function dismissPwaAlert() {
+    document.getElementById('pwaInstallAlert').classList.add('d-none');
+    sessionStorage.setItem('pwa-alert-dismissed', '1');
+}
 </script>
 <?= $this->endSection() ?>

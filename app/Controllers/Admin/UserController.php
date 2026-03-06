@@ -175,6 +175,10 @@ class UserController extends BaseController
                 if ($rol['nombre'] === 'admin') {
                     $profileData['es_superadmin'] = 0;
                 }
+                if (in_array($rol['nombre'], ['profesor', 'acudiente'])) {
+                    $profileData['tipo_documento']   = $this->request->getPost('tipo_documento') ?? 'CC';
+                    $profileData['numero_documento']  = $this->request->getPost('numero_documento') ?? '';
+                }
                 $db->table($profileTable)->insert($profileData);
             }
 
@@ -339,6 +343,10 @@ class UserController extends BaseController
                     if ($newRol['nombre'] === 'admin') {
                         $profileData['es_superadmin'] = 0;
                     }
+                    if (in_array($newRol['nombre'], ['profesor', 'acudiente'])) {
+                        $profileData['tipo_documento']   = $this->request->getPost('tipo_documento') ?? 'CC';
+                        $profileData['numero_documento']  = $this->request->getPost('numero_documento') ?? '';
+                    }
                     $db->table($newTable)->insert($profileData);
                 }
             } else {
@@ -351,6 +359,10 @@ class UserController extends BaseController
                 };
 
                 if ($profileTable) {
+                    if (in_array($newRol['nombre'], ['profesor', 'acudiente'])) {
+                        $profileData['tipo_documento']   = $this->request->getPost('tipo_documento') ?? 'CC';
+                        $profileData['numero_documento']  = $this->request->getPost('numero_documento') ?? '';
+                    }
                     $db->table($profileTable)
                        ->where('usuario_id', $id)
                        ->update($profileData);

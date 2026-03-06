@@ -140,6 +140,25 @@
                         <input type="tel" class="form-control" id="telefono" name="telefono"
                                value="<?= old('telefono', $usuario['telefono'] ?? '') ?>">
                     </div>
+
+                    <!-- Document fields for profesor/acudiente -->
+                    <div id="documento-fields" style="display:none;">
+                        <div class="row">
+                            <div class="col-md-5 mb-3">
+                                <label for="tipo_documento" class="form-label">Tipo Documento <span class="text-danger">*</span></label>
+                                <select class="form-select" id="tipo_documento" name="tipo_documento">
+                                    <option value="CC" <?= old('tipo_documento', $usuario['tipo_documento'] ?? '') === 'CC' ? 'selected' : '' ?>>Cédula</option>
+                                    <option value="CE" <?= old('tipo_documento', $usuario['tipo_documento'] ?? '') === 'CE' ? 'selected' : '' ?>>Cédula Extranjería</option>
+                                    <option value="pasaporte" <?= old('tipo_documento', $usuario['tipo_documento'] ?? '') === 'pasaporte' ? 'selected' : '' ?>>Pasaporte</option>
+                                </select>
+                            </div>
+                            <div class="col-md-7 mb-3">
+                                <label for="numero_documento" class="form-label">Número Documento <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="numero_documento" name="numero_documento"
+                                       value="<?= old('numero_documento', $usuario['numero_documento'] ?? '') ?>">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -161,6 +180,17 @@
 
 <?= $this->section('scripts') ?>
 <script>
+// Show/hide document fields based on role
+var rolSelect = document.getElementById('rol_id');
+var docFields = document.getElementById('documento-fields');
+function toggleDocFields() {
+    var selected = rolSelect.options[rolSelect.selectedIndex];
+    var rolName = selected ? selected.textContent.trim().toLowerCase() : '';
+    docFields.style.display = (rolName === 'profesor' || rolName === 'acudiente') ? '' : 'none';
+}
+rolSelect.addEventListener('change', toggleDocFields);
+toggleDocFields();
+
 document.querySelectorAll('.toggle-password').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var input = document.getElementById(this.dataset.target);

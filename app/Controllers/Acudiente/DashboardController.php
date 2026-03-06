@@ -25,7 +25,7 @@ class DashboardController extends BaseController
         // Get parent's students
         $mis_estudiantes = $db->table('estudiantes')
                               ->where('acudiente_id', $acudienteId)
-                              ->where('activo', 1)
+                              ->where('estado', 'activo')
                               ->get()
                               ->getResultArray();
 
