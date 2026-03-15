@@ -169,8 +169,9 @@ class AuthController extends BaseController
         // Generate reset token
         $token = $this->userModel->generateResetToken($user['id']);
 
-        // Send email (will be implemented with SendGrid later)
-        $this->sendResetEmail($user, $token);
+        if ($token) {
+            $this->sendResetEmail($user, $token);
+        }
 
         return redirect()->back()->with('message', $successMessage);
     }

@@ -183,15 +183,20 @@ class UserModel extends Model
      */
     public function generateResetToken(int $userId): ?string
     {
-        $token = bin2hex(random_bytes(32));
+        $token   = bin2hex(random_bytes(32));
         $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
-        $this->update($userId, [
-            'token_recuperacion' => hash('sha256', $token),
-            'token_expira'       => $expires
-        ]);
+        // Use DB builder directly to bypass model validation (cleanValidationRules
+        // has issues with is_unique placeholders on partial updates).
+        $saved = $this->db->table('usuarios')
+            ->where('id', $userId)
+            ->update([
+                'token_recuperacion' => hash('sha256', $token),
+                'token_expira'       => $expires,
+                'updated_at'         => date('Y-m-d H:i:s'),
+            ]);
 
-        return $token;
+        return $saved ? $token : null;
     }
 
     /**
@@ -210,10 +215,13 @@ class UserModel extends Model
      */
     public function clearResetToken(int $userId): bool
     {
-        return $this->update($userId, [
-            'token_recuperacion' => null,
-            'token_expira'       => null
-        ]);
+        return $this->db->table('usuarios')
+            ->where('id', $userId)
+            ->update([
+                'token_recuperacion' => null,
+                'token_expira'       => null,
+                'updated_at'         => date('Y-m-d H:i:s'),
+            ]);
     }
 
     /**
