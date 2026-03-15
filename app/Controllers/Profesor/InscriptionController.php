@@ -39,8 +39,9 @@ class InscriptionController extends BaseController
     public function generate(): ResponseInterface
     {
         $rules = [
-            'nombre' => 'required|min_length[3]|max_length[200]',
-            'email'  => 'required|valid_email',
+            'nombres'   => 'required|min_length[2]|max_length[100]',
+            'apellidos' => 'required|min_length[2]|max_length[100]',
+            'email'     => 'required|valid_email',
         ];
 
         if (!$this->validate($rules)) {
@@ -50,7 +51,7 @@ class InscriptionController extends BaseController
         }
 
         $email  = $this->request->getPost('email');
-        $nombre = $this->request->getPost('nombre');
+        $nombre = trim($this->request->getPost('nombres') . ' ' . $this->request->getPost('apellidos'));
 
         // Verify email is not already registered
         $db = \Config\Database::connect();

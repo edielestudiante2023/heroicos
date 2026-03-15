@@ -25,10 +25,17 @@
             <div class="card-body p-4">
                 <form action="<?= site_url('profesor/inscripcion/generar') ?>" method="POST">
                     <?= csrf_field() ?>
-                    <div class="mb-3">
-                        <label for="nombre" class="form-label">Nombre del Acudiente</label>
-                        <input type="text" class="form-control" id="nombre" name="nombre"
-                               value="<?= old('nombre') ?>" required placeholder="Nombre completo del acudiente">
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label for="nombres" class="form-label">Nombres del Acudiente</label>
+                            <input type="text" class="form-control" id="nombres" name="nombres"
+                                   value="<?= old('nombres') ?>" required placeholder="Nombres">
+                        </div>
+                        <div class="col-6">
+                            <label for="apellidos" class="form-label">Apellidos del Acudiente</label>
+                            <input type="text" class="form-control" id="apellidos" name="apellidos"
+                                   value="<?= old('apellidos') ?>" required placeholder="Apellidos">
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email del Acudiente</label>
