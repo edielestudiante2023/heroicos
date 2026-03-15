@@ -421,6 +421,20 @@ class UserController extends BaseController
             };
 
             if ($profileTable) {
+                // For acudientes: block deletion if they still have students assigned
+                if ($profileTable === 'acudientes') {
+                    $acudiente = $db->table('acudientes')->where('usuario_id', $id)->get()->getRowArray();
+                    if ($acudiente) {
+                        $estudiantesCount = $db->table('estudiantes')
+                            ->where('acudiente_id', $acudiente['id'])
+                            ->countAllResults();
+                        if ($estudiantesCount > 0) {
+                            $db->transRollback();
+                            return redirect()->to('/admin/users')
+                                ->with('error', "No se puede eliminar este acudiente porque tiene {$estudiantesCount} estudiante(s) asociado(s). Reasigne o elimine los estudiantes primero.");
+                        }
+                    }
+                }
                 $db->table($profileTable)->where('usuario_id', $id)->delete();
             }
 
