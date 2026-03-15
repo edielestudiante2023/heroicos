@@ -332,6 +332,62 @@ class StudentController extends BaseController
     }
 
     /**
+     * Hard delete student (superadmin only)
+     */
+    public function hardDelete($id)
+    {
+        if (!session()->get('es_superadmin')) {
+            return redirect()->to('/admin/students')
+                           ->with('error', 'No tiene permisos para eliminar estudiantes permanentemente.');
+        }
+
+        $estudiante = $this->studentModel->find($id);
+
+        if (!$estudiante) {
+            return redirect()->to('/admin/students')
+                           ->with('error', 'Estudiante no encontrado.');
+        }
+
+        $db = \Config\Database::connect();
+
+        // Check related records
+        $relaciones = [
+            'inscripciones'              => 'Inscripciones a grupos',
+            'cargos'                     => 'Cargos de pago',
+            'asistencias'                => 'Registros de asistencia',
+            'torneo_inscripciones'       => 'Inscripciones a torneos',
+            'paz_y_salvos'               => 'Paz y salvos',
+            'solicitudes_clase_particular' => 'Clases particulares',
+            'estudiante_historial_deportivo' => 'Historial deportivo',
+        ];
+
+        $conDatos = [];
+        foreach ($relaciones as $tabla => $etiqueta) {
+            $count = $db->table($tabla)->where('estudiante_id', $id)->countAllResults();
+            if ($count > 0) {
+                $conDatos[] = "$etiqueta ($count)";
+            }
+        }
+
+        if (!empty($conDatos)) {
+            return redirect()->to('/admin/students')
+                           ->with('error', 'No se puede eliminar al estudiante porque tiene registros asociados: ' . implode(', ', $conDatos) . '.');
+        }
+
+        try {
+            $this->logAction('HARD_DELETE', 'estudiantes', $id);
+            $this->studentModel->delete($id, true);
+
+            return redirect()->to('/admin/students')
+                           ->with('message', 'Estudiante eliminado permanentemente.');
+
+        } catch (\Exception $e) {
+            return redirect()->to('/admin/students')
+                           ->with('error', 'Error al eliminar estudiante: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Log admin action
      */
     protected function logAction(string $action, string $tabla, int $registroId): void

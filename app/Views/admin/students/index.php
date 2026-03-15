@@ -193,6 +193,13 @@
                                         <i class="bi bi-person-x"></i>
                                     </button>
                                     <?php endif; ?>
+                                    <?php if (session()->get('es_superadmin')): ?>
+                                    <button type="button" class="btn btn-danger"
+                                            onclick="confirmHardDelete(<?= $est['id'] ?>, '<?= esc($est['nombres'] . ' ' . $est['apellidos']) ?>')"
+                                            title="Eliminar permanentemente">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>
@@ -235,6 +242,35 @@
         </div>
     </div>
 </div>
+
+<!-- Hard Delete Modal (superadmin) -->
+<div class="modal fade" id="hardDeleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-trash3 me-2"></i>Eliminar Permanentemente</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Está seguro de <strong>eliminar permanentemente</strong> al estudiante <strong id="hardDeleteStudentName"></strong>?</p>
+                <p class="text-danger mb-0">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    Esta acción <strong>no se puede deshacer</strong>. El estudiante y todos sus datos serán eliminados del sistema.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="hardDeleteForm" method="post" style="display:inline;">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash3 me-1"></i>Eliminar Permanentemente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
@@ -243,6 +279,11 @@ function confirmDelete(id, name) {
     document.getElementById('deleteStudentName').textContent = name;
     document.getElementById('deleteForm').action = '<?= site_url('admin/students') ?>/' + id;
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+function confirmHardDelete(id, name) {
+    document.getElementById('hardDeleteStudentName').textContent = name;
+    document.getElementById('hardDeleteForm').action = '<?= site_url('admin/students') ?>/' + id + '/hard';
+    new bootstrap.Modal(document.getElementById('hardDeleteModal')).show();
 }
 </script>
 <?= $this->endSection() ?>
