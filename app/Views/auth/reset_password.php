@@ -43,6 +43,9 @@
                    minlength="8"
                    required
                    autofocus>
+            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password" tabindex="-1">
+                <i class="bi bi-eye"></i>
+            </button>
         </div>
     </div>
 
@@ -59,6 +62,9 @@
                    placeholder="••••••••"
                    minlength="8"
                    required>
+            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_confirm" tabindex="-1">
+                <i class="bi bi-eye"></i>
+            </button>
         </div>
     </div>
 
@@ -75,4 +81,20 @@
     </div>
 </form>
 
+<?= $this->section('scripts') ?>
+<script>
+document.querySelectorAll('.toggle-password').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var input = document.getElementById(this.dataset.target);
+        var icon = this.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
+});
+</script>
 <?= $this->endSection() ?>

@@ -86,18 +86,26 @@ class PerfilController extends BaseController
 
     public function cambiarPassword()
     {
-        $userId = session()->get('user_id');
-        $db = \Config\Database::connect();
+        $userId   = session()->get('user_id');
+        $db       = \Config\Database::connect();
 
-        $rules = [
-            'password_actual' => 'required',
-            'password_nuevo'  => 'required|min_length[6]',
-            'password_confirmar' => 'required|matches[password_nuevo]',
-        ];
+        $passwordActual    = $this->request->getPost('password_actual');
+        $passwordNuevo     = $this->request->getPost('password_nuevo');
+        $passwordConfirmar = $this->request->getPost('password_confirmar');
 
-        if (!$this->validate($rules)) {
+        if (empty($passwordActual) || empty($passwordNuevo) || empty($passwordConfirmar)) {
             return redirect()->back()
-                ->with('error', 'Verifique los campos. La nueva contraseña debe tener al menos 6 caracteres.');
+                ->with('error', 'Todos los campos de contraseña son obligatorios.');
+        }
+
+        if (strlen($passwordNuevo) < 6) {
+            return redirect()->back()
+                ->with('error', 'La nueva contraseña debe tener al menos 6 caracteres.');
+        }
+
+        if ($passwordNuevo !== $passwordConfirmar) {
+            return redirect()->back()
+                ->with('error', 'La nueva contraseña y la confirmación no coinciden.');
         }
 
         $usuario = $db->table('usuarios')
@@ -109,19 +117,25 @@ class PerfilController extends BaseController
                 ->with('error', 'Usuario no encontrado.');
         }
 
-        if (!password_verify($this->request->getPost('password_actual'), $usuario['password'])) {
+        if (!password_verify($passwordActual, $usuario['password'])) {
             return redirect()->back()
                 ->with('error', 'La contraseña actual es incorrecta.');
         }
 
-        $db->table('usuarios')
-           ->where('id', $userId)
-           ->update([
-               'password'   => password_hash($this->request->getPost('password_nuevo'), PASSWORD_DEFAULT),
-               'updated_at' => date('Y-m-d H:i:s'),
-           ]);
+        try {
+            $db->table('usuarios')
+               ->where('id', $userId)
+               ->update([
+                   'password'   => password_hash($passwordNuevo, PASSWORD_DEFAULT),
+                   'updated_at' => date('Y-m-d H:i:s'),
+               ]);
 
-        return redirect()->to('acudiente/perfil')
-            ->with('message', 'Contraseña actualizada correctamente.');
+            return redirect()->to('acudiente/perfil')
+                ->with('message', 'Contraseña actualizada correctamente.');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error al actualizar la contraseña. Intente nuevamente.');
+        }
     }
 }

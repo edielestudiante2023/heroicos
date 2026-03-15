@@ -24,7 +24,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Tipo Documento</label>
-                            <?php if (!empty($acudiente['tipo_documento'])): ?>
+                            <?php if (!empty($acudiente['numero_documento'])): ?>
                                 <input type="text" class="form-control" value="<?= esc($acudiente['tipo_documento']) ?>" disabled>
                             <?php else: ?>
                                 <select name="tipo_documento" class="form-select" required>
@@ -92,15 +92,30 @@
                     <?= csrf_field() ?>
                     <div class="mb-3">
                         <label class="form-label">Contraseña actual</label>
-                        <input type="password" name="password_actual" class="form-control" required>
+                        <div class="input-group">
+                            <input type="password" name="password_actual" id="password_actual" class="form-control" required>
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_actual" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Nueva contraseña</label>
-                        <input type="password" name="password_nuevo" class="form-control" required minlength="6">
+                        <div class="input-group">
+                            <input type="password" name="password_nuevo" id="password_nuevo" class="form-control" required minlength="6">
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_nuevo" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Confirmar contraseña</label>
-                        <input type="password" name="password_confirmar" class="form-control" required>
+                        <div class="input-group">
+                            <input type="password" name="password_confirmar" id="password_confirmar" class="form-control" required>
+                            <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password_confirmar" tabindex="-1">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-warning w-100">
                         <i class="bi bi-key me-1"></i>Cambiar Contraseña
@@ -110,4 +125,22 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+document.querySelectorAll('.toggle-password').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var input = document.getElementById(this.dataset.target);
+        var icon = this.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.replace('bi-eye', 'bi-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.replace('bi-eye-slash', 'bi-eye');
+        }
+    });
+});
+</script>
 <?= $this->endSection() ?>
