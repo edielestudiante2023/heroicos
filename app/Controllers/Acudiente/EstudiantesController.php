@@ -224,7 +224,7 @@ class EstudiantesController extends BaseController
         // Store consent records
         $consentVersion = $this->request->getPost('consent_version') ?? '1.0';
         $nombreFirmante = $acudiente['nombres'] . ' ' . $acudiente['apellidos'];
-        $docFirmante = $acudiente['numero_documento'];
+        $docFirmante = $acudiente['numero_documento'] ?? '';
         $userAgent = $this->request->getUserAgent()->getAgentString();
         $consentTexto = 'Autorizacion tratamiento datos personales Academia Heroicos v' . $consentVersion;
 
