@@ -253,17 +253,22 @@
             </div>
             <div class="modal-body">
                 <p>¿Está seguro de <strong>eliminar permanentemente</strong> al estudiante <strong id="hardDeleteStudentName"></strong>?</p>
-                <p class="text-danger mb-0">
+                <p class="text-danger">
                     <i class="bi bi-exclamation-triangle-fill me-1"></i>
                     Esta acción <strong>no se puede deshacer</strong>. El estudiante y todos sus datos serán eliminados del sistema.
                 </p>
+                <div class="alert alert-warning py-2">
+                    <label class="form-label mb-1 fw-semibold">Para confirmar, resuelva: <span id="mathQuestion"></span></label>
+                    <input type="number" id="mathAnswer" class="form-control" placeholder="Respuesta..." autocomplete="off">
+                    <div id="mathError" class="text-danger small mt-1" style="display:none;">Respuesta incorrecta. Intente de nuevo.</div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <form id="hardDeleteForm" method="post" style="display:inline;">
                     <?= csrf_field() ?>
                     <input type="hidden" name="_method" value="DELETE">
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" id="hardDeleteSubmit" class="btn btn-danger" disabled>
                         <i class="bi bi-trash3 me-1"></i>Eliminar Permanentemente
                     </button>
                 </form>
@@ -280,10 +285,55 @@ function confirmDelete(id, name) {
     document.getElementById('deleteForm').action = '<?= site_url('admin/students') ?>/' + id;
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
+var _mathCorrect = 0;
+
 function confirmHardDelete(id, name) {
     document.getElementById('hardDeleteStudentName').textContent = name;
     document.getElementById('hardDeleteForm').action = '<?= site_url('admin/students') ?>/' + id + '/hard';
+
+    // Generate random arithmetic question
+    var a = Math.floor(Math.random() * 10) + 2;
+    var b = Math.floor(Math.random() * 10) + 2;
+    var ops = [
+        { label: a + ' + ' + b, result: a + b },
+        { label: a + ' × ' + b, result: a * b },
+        { label: (a * b) + ' − ' + b, result: a * b - b },
+    ];
+    var op = ops[Math.floor(Math.random() * ops.length)];
+    _mathCorrect = op.result;
+
+    document.getElementById('mathQuestion').textContent = op.label + ' =';
+    document.getElementById('mathAnswer').value = '';
+    document.getElementById('mathError').style.display = 'none';
+    document.getElementById('hardDeleteSubmit').disabled = true;
+
     new bootstrap.Modal(document.getElementById('hardDeleteModal')).show();
 }
+
+document.getElementById('hardDeleteModal').addEventListener('shown.bs.modal', function() {
+    document.getElementById('mathAnswer').focus();
+});
+
+document.getElementById('mathAnswer').addEventListener('input', function() {
+    var val = parseInt(this.value, 10);
+    var btn = document.getElementById('hardDeleteSubmit');
+    var err = document.getElementById('mathError');
+    if (val === _mathCorrect) {
+        btn.disabled = false;
+        err.style.display = 'none';
+    } else {
+        btn.disabled = true;
+        if (this.value !== '') err.style.display = 'block';
+        else err.style.display = 'none';
+    }
+});
+
+document.getElementById('hardDeleteForm').addEventListener('submit', function(e) {
+    var val = parseInt(document.getElementById('mathAnswer').value, 10);
+    if (val !== _mathCorrect) {
+        e.preventDefault();
+        document.getElementById('mathError').style.display = 'block';
+    }
+});
 </script>
 <?= $this->endSection() ?>
