@@ -47,21 +47,35 @@ class PerfilController extends BaseController
             'direccion' => 'required|max_length[255]',
         ];
 
+        // Validate documento fields only if the acudiente doesn't have them yet
+        if (empty($acudiente['numero_documento'])) {
+            $rules['tipo_documento']   = 'required';
+            $rules['numero_documento'] = 'required|numeric|max_length[20]';
+        }
+
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()
                 ->with('error', 'Por favor verifique los campos.');
         }
 
+        $updateData = [
+            'telefono'     => $this->request->getPost('telefono'),
+            'telefono_alt' => $this->request->getPost('telefono_alt'),
+            'direccion'    => $this->request->getPost('direccion'),
+            'ciudad'       => $this->request->getPost('ciudad'),
+            'ocupacion'    => $this->request->getPost('ocupacion'),
+            'updated_at'   => date('Y-m-d H:i:s'),
+        ];
+
+        // Only allow saving documento fields if they weren't set before
+        if (empty($acudiente['numero_documento'])) {
+            $updateData['tipo_documento']   = $this->request->getPost('tipo_documento');
+            $updateData['numero_documento'] = $this->request->getPost('numero_documento');
+        }
+
         $db->table('acudientes')
            ->where('id', $acudiente['id'])
-           ->update([
-               'telefono'     => $this->request->getPost('telefono'),
-               'telefono_alt' => $this->request->getPost('telefono_alt'),
-               'direccion'    => $this->request->getPost('direccion'),
-               'ciudad'       => $this->request->getPost('ciudad'),
-               'ocupacion'    => $this->request->getPost('ocupacion'),
-               'updated_at'   => date('Y-m-d H:i:s'),
-           ]);
+           ->update($updateData);
 
         // Update session name if changed
         session()->set('nombre', $acudiente['nombres']);

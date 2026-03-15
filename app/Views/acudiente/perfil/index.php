@@ -24,11 +24,25 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Tipo Documento</label>
-                            <input type="text" class="form-control" value="<?= esc($acudiente['tipo_documento'] ?? '') ?>" disabled>
+                            <?php if (!empty($acudiente['tipo_documento'])): ?>
+                                <input type="text" class="form-control" value="<?= esc($acudiente['tipo_documento']) ?>" disabled>
+                            <?php else: ?>
+                                <select name="tipo_documento" class="form-select" required>
+                                    <option value="">Seleccione...</option>
+                                    <option value="CC">Cédula de Ciudadanía</option>
+                                    <option value="CE">Cédula de Extranjería</option>
+                                    <option value="PA">Pasaporte</option>
+                                    <option value="TI">Tarjeta de Identidad</option>
+                                </select>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Numero Documento</label>
-                            <input type="text" class="form-control" value="<?= esc($acudiente['numero_documento'] ?? '') ?>" disabled>
+                            <label class="form-label">Numero Documento <?= empty($acudiente['numero_documento']) ? '<span class="text-danger">*</span>' : '' ?></label>
+                            <?php if (!empty($acudiente['numero_documento'])): ?>
+                                <input type="text" class="form-control" value="<?= esc($acudiente['numero_documento']) ?>" disabled>
+                            <?php else: ?>
+                                <input type="text" name="numero_documento" class="form-control" placeholder="Ingrese su documento" required pattern="[0-9]+" title="Solo números">
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Email</label>
