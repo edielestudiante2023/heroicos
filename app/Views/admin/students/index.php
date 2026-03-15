@@ -193,7 +193,7 @@
                                         <i class="bi bi-person-x"></i>
                                     </button>
                                     <?php endif; ?>
-                                    <?php if (session()->get('es_superadmin')): ?>
+                                    <?php if (session()->get('rol_nombre') === 'admin'): ?>
                                     <button type="button" class="btn btn-danger"
                                             onclick="confirmHardDelete(<?= $est['id'] ?>, '<?= esc($est['nombres'] . ' ' . $est['apellidos']) ?>')"
                                             title="Eliminar permanentemente">

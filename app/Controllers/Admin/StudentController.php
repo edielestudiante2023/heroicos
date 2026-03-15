@@ -336,7 +336,7 @@ class StudentController extends BaseController
      */
     public function hardDelete($id)
     {
-        if (!session()->get('es_superadmin')) {
+        if (session()->get('rol_nombre') !== 'admin') {
             return redirect()->to('/admin/students')
                            ->with('error', 'No tiene permisos para eliminar estudiantes permanentemente.');
         }
