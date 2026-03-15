@@ -81,6 +81,8 @@
     </div>
 </form>
 
+<?= $this->endSection() ?>
+
 <?= $this->section('scripts') ?>
 <script>
 document.querySelectorAll('.toggle-password').forEach(function(btn) {
