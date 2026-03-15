@@ -199,8 +199,10 @@
                 <form id="deleteForm" method="post" style="display:inline;">
                     <?= csrf_field() ?>
                     <input type="hidden" name="_method" value="DELETE">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash me-1"></i>Eliminar
+                    <button type="submit" id="deleteSubmitBtn" class="btn btn-danger">
+                        <i class="bi bi-trash me-1" id="deleteIcon"></i>
+                        <span class="spinner-border spinner-border-sm me-1 d-none" id="deleteSpinner" role="status"></span>
+                        <span id="deleteLabel">Eliminar</span>
                     </button>
                 </form>
             </div>
@@ -220,7 +222,27 @@ function confirmSendCredentials(id, email) {
 function confirmDelete(id, email) {
     document.getElementById('deleteUserEmail').textContent = email;
     document.getElementById('deleteForm').action = '<?= site_url('admin/users') ?>/' + id;
+    // Reset button state each time modal opens
+    var btn    = document.getElementById('deleteSubmitBtn');
+    var icon   = document.getElementById('deleteIcon');
+    var spinner = document.getElementById('deleteSpinner');
+    var label  = document.getElementById('deleteLabel');
+    btn.disabled = false;
+    icon.classList.remove('d-none');
+    spinner.classList.add('d-none');
+    label.textContent = 'Eliminar';
     new bootstrap.Modal(document.getElementById('deleteModal')).show();
 }
+
+document.getElementById('deleteForm').addEventListener('submit', function() {
+    var btn    = document.getElementById('deleteSubmitBtn');
+    var icon   = document.getElementById('deleteIcon');
+    var spinner = document.getElementById('deleteSpinner');
+    var label  = document.getElementById('deleteLabel');
+    btn.disabled = true;
+    icon.classList.add('d-none');
+    spinner.classList.remove('d-none');
+    label.textContent = 'Eliminando...';
+});
 </script>
 <?= $this->endSection() ?>
