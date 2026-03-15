@@ -66,7 +66,7 @@
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table id="dt-attendance" class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Fecha</th>
@@ -123,4 +123,10 @@
     </div>
 </div>
 <?php endif; ?>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+$(function() { initDT('dt-attendance', 'Asistencia', { columnDefs: [{ orderable: false, targets: [3, -1] }] }); });
+</script>
 <?= $this->endSection() ?>

@@ -137,7 +137,7 @@
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table id="dt-groups" class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Grupo</th>
@@ -252,6 +252,8 @@
 
 <?= $this->section('scripts') ?>
 <script>
+$(function() { initDT('dt-groups', 'Grupos', { columnDefs: [{ orderable: false, targets: [2, 3, -1] }] }); });
+
 function confirmDelete(id, name) {
     document.getElementById('deleteGroupName').textContent = name;
     document.getElementById('deleteForm').action = '<?= site_url('admin/groups') ?>/' + id;

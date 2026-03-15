@@ -122,7 +122,7 @@
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table id="dt-students" class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Código</th>
@@ -280,6 +280,8 @@
 
 <?= $this->section('scripts') ?>
 <script>
+$(function() { initDT('dt-students', 'Estudiantes', { columnDefs: [{ orderable: false, targets: [1, -1] }] }); });
+
 function confirmDelete(id, name) {
     document.getElementById('deleteStudentName').textContent = name;
     document.getElementById('deleteForm').action = '<?= site_url('admin/students') ?>/' + id;

@@ -99,7 +99,7 @@
                     </div>
                 <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table id="dt-est-cargos" class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>Concepto</th>
@@ -272,4 +272,10 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+$(function() { initDT('dt-est-cargos', 'Cargos Estudiante', { ordering: false, columnDefs: [] }); });
+</script>
 <?= $this->endSection() ?>

@@ -32,6 +32,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- DataTables -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
 
     <style>
         :root {
@@ -277,6 +280,14 @@
         /* Hide offline banner by default - only inline JS can show it after real check */
         #heroicos-offline-banner { display: none !important; }
         #heroicos-offline-banner.verified-offline { display: flex !important; }
+
+        /* DataTables overrides */
+        .dataTables_wrapper { padding: 0.75rem 1rem 0.5rem; }
+        .dataTables_wrapper .row:first-child { margin-bottom: 0.5rem; }
+        .dataTables_wrapper .dt-buttons .btn { font-size: 0.8rem; }
+        .dataTables_wrapper .dataTables_filter label { margin-bottom: 0; }
+        .dataTables_wrapper .dataTables_info { font-size: 0.85rem; color: #6c757d; }
+        .dataTables_wrapper .dataTables_paginate { font-size: 0.85rem; }
     </style>
     <?= $this->renderSection('styles') ?>
 </head>
@@ -416,6 +427,14 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery + DataTables + Buttons + jsZip -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 
     <script>
         // Sidebar toggle for mobile
@@ -573,6 +592,28 @@
     })();
     </script>
 
+    <script>
+    var DT_LANG = { url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/es-ES.json' };
+    var DT_DOM  = "<'row'<'col-sm-12 col-md-6'B><'col-sm-12 col-md-6'f>>t<'row mt-2'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>";
+    function initDT(id, title, opts) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var defaults = {
+            language: DT_LANG,
+            dom: DT_DOM,
+            buttons: [{
+                extend: 'excelHtml5',
+                text: '<i class="bi bi-file-earmark-excel me-1"></i>Excel',
+                className: 'btn btn-success btn-sm',
+                title: title,
+                exportOptions: { columns: ':not(:last-child)' }
+            }],
+            pageLength: 25,
+            order: []
+        };
+        $(el).DataTable($.extend(true, defaults, opts || {}));
+    }
+    </script>
     <?= $this->renderSection('scripts') ?>
 </body>
 </html>

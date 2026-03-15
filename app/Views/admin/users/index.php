@@ -67,7 +67,7 @@
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table id="dt-users" class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Usuario</th>
@@ -213,6 +213,8 @@
 
 <?= $this->section('scripts') ?>
 <script>
+$(function() { initDT('dt-users', 'Usuarios', { columnDefs: [{ orderable: false, targets: [0, -1] }] }); });
+
 function confirmSendCredentials(id, email) {
     document.getElementById('credentialsUserEmail').textContent = email;
     document.getElementById('sendCredentialsForm').action = '<?= site_url('admin/users') ?>/' + id + '/send-credentials';

@@ -73,7 +73,7 @@
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table id="dt-schedules" class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Nombre</th>
@@ -172,6 +172,8 @@
 
 <?= $this->section('scripts') ?>
 <script>
+$(function() { initDT('dt-schedules', 'Horarios', { columnDefs: [{ orderable: false, targets: [-1] }] }); });
+
 function confirmDelete(id, name) {
     document.getElementById('deleteScheduleName').textContent = name;
     document.getElementById('deleteForm').action = '<?= site_url('admin/schedules') ?>/' + id;

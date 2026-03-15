@@ -118,7 +118,7 @@
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table id="dt-payments" class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Recibo</th>
@@ -181,4 +181,10 @@
         <small class="text-muted">Mostrando <?= count($pagos) ?> pagos</small>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+$(function() { initDT('dt-payments', 'Pagos', { columnDefs: [{ orderable: false, targets: [-1] }] }); });
+</script>
 <?= $this->endSection() ?>

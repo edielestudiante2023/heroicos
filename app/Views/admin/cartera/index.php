@@ -71,7 +71,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table id="dt-morosos" class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>Estudiante</th>
@@ -164,7 +164,7 @@
                     </div>
                 <?php else: ?>
                     <div class="table-responsive">
-                        <table class="table table-hover mb-0">
+                        <table id="dt-cargos" class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>Estudiante</th>
@@ -237,4 +237,13 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+$(function() {
+    initDT('dt-morosos', 'Morosos', { paging: false, searching: false, info: false, columnDefs: [{ orderable: false, targets: [-1] }] });
+    initDT('dt-cargos', 'Cartera General', { columnDefs: [{ orderable: false, targets: [-1] }] });
+});
+</script>
 <?= $this->endSection() ?>

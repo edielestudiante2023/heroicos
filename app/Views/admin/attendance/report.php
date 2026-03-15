@@ -82,7 +82,7 @@
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table id="dt-report" class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Fecha</th>
@@ -114,4 +114,10 @@
         <?php endif; ?>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+$(function() { initDT('dt-report', 'Historial Asistencia', { columnDefs: [{ orderable: false, targets: [3] }] }); });
+</script>
 <?= $this->endSection() ?>

@@ -64,7 +64,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover mb-0">
+                    <table id="dt-session" class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
@@ -104,4 +104,10 @@
     <div class="card-body"><?= esc($sesion['observaciones']) ?></div>
 </div>
 <?php endif; ?>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+$(function() { initDT('dt-session', 'Lista Asistencia', { columnDefs: [{ orderable: false, targets: [3] }], paging: false }); });
+</script>
 <?= $this->endSection() ?>

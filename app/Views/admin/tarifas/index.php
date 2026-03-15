@@ -80,7 +80,7 @@
             </div>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table id="dt-tarifas" class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Concepto</th>
@@ -142,6 +142,8 @@
 
 <?= $this->section('scripts') ?>
 <script>
+$(function() { initDT('dt-tarifas', 'Tarifas', { columnDefs: [{ orderable: false, targets: [-1] }] }); });
+
 function confirmDelete(id) {
     if (confirm('&iquest;Est&aacute; seguro de eliminar esta tarifa?')) {
         const form = document.getElementById('deleteForm');
