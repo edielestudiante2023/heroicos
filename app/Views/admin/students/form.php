@@ -302,9 +302,10 @@
             </div>
 
             <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="bi bi-check-lg me-2"></i>
-                    <?= $action === 'create' ? 'Crear Estudiante' : 'Guardar Cambios' ?>
+                <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                    <i class="bi bi-check-lg me-2" id="submitIcon"></i>
+                    <span class="spinner-border spinner-border-sm me-2 d-none" id="submitSpinner" role="status"></span>
+                    <span id="submitLabel"><?= $action === 'create' ? 'Crear Estudiante' : 'Guardar Cambios' ?></span>
                 </button>
                 <a href="<?= site_url('admin/students') ?>" class="btn btn-outline-secondary">
                     Cancelar
@@ -341,7 +342,17 @@
             if (fotoInput.files.length > 0 && fotoInput.files[0].size > MAX_FILE_SIZE) {
                 e.preventDefault();
                 alert('La foto supera el tamaño maximo de 2MB.');
+                return;
             }
+            // Loading state
+            var btn     = document.getElementById('submitBtn');
+            var icon    = document.getElementById('submitIcon');
+            var spinner = document.getElementById('submitSpinner');
+            var label   = document.getElementById('submitLabel');
+            btn.disabled = true;
+            icon.classList.add('d-none');
+            spinner.classList.remove('d-none');
+            label.textContent = 'Guardando...';
         });
     }
 })();

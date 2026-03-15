@@ -92,6 +92,18 @@ class StudentController extends BaseController
                            ->with('errors', $this->validator->getErrors());
         }
 
+        // Verificar documento duplicado
+        $db = \Config\Database::connect();
+        $existe = $db->table('estudiantes')
+                     ->where('tipo_documento', $this->request->getPost('tipo_documento'))
+                     ->where('numero_documento', $this->request->getPost('numero_documento'))
+                     ->countAllResults();
+        if ($existe > 0) {
+            return redirect()->back()
+                           ->withInput()
+                           ->with('error', 'Ya existe un estudiante registrado con ese tipo y número de documento.');
+        }
+
         try {
             $data = [
                 'codigo'              => $this->studentModel->generateCode(),
