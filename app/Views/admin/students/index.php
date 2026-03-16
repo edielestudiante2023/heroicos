@@ -141,9 +141,15 @@
                             <td><code><?= esc($est['codigo']) ?></code></td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="user-avatar me-2" style="width:36px;height:36px;font-size:0.875rem;background:<?= $est['sexo'] === 'M' ? '#b720d2' : '#ffd65e' ?>;color:<?= $est['sexo'] === 'M' ? 'white' : '#333' ?>">
-                                        <?= strtoupper(substr($est['nombres'], 0, 1)) ?>
-                                    </div>
+                                    <?php if (!empty($est['foto'])): ?>
+                                        <img src="<?= base_url($est['foto']) ?>" alt="<?= esc($est['nombres']) ?>"
+                                             class="me-2 rounded-circle object-fit-cover"
+                                             style="width:36px;height:36px;object-fit:cover;">
+                                    <?php else: ?>
+                                        <div class="user-avatar me-2" style="width:36px;height:36px;font-size:0.875rem;background:<?= $est['sexo'] === 'M' ? '#b720d2' : '#ffd65e' ?>;color:<?= $est['sexo'] === 'M' ? 'white' : '#333' ?>">
+                                            <?= strtoupper(substr($est['nombres'], 0, 1)) ?>
+                                        </div>
+                                    <?php endif; ?>
                                     <div>
                                         <strong><?= esc($est['nombres'] . ' ' . $est['apellidos']) ?></strong>
                                         <div class="small text-muted"><?= $est['sexo'] === 'M' ? 'Masculino' : 'Femenino' ?></div>

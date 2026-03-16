@@ -180,6 +180,27 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
+        <!-- Foto del estudiante -->
+        <div class="table-card mb-4 text-center">
+            <div class="card-body py-4">
+                <?php if (!empty($estudiante['foto'])): ?>
+                    <img src="<?= base_url($estudiante['foto']) ?>" alt="<?= esc($estudiante['nombres']) ?>"
+                         class="rounded-circle mb-3"
+                         style="width:120px;height:120px;object-fit:cover;border:4px solid var(--heroicos-primary);">
+                <?php else: ?>
+                    <div class="user-avatar mx-auto mb-3"
+                         style="width:120px;height:120px;font-size:3rem;background:<?= $estudiante['sexo'] === 'M' ? 'var(--heroicos-primary)' : 'var(--heroicos-secondary)' ?>;color:<?= $estudiante['sexo'] === 'M' ? 'white' : '#333' ?>">
+                        <?= strtoupper(substr($estudiante['nombres'], 0, 1)) ?>
+                    </div>
+                <?php endif; ?>
+                <h5 class="mb-1 fw-bold"><?= esc($estudiante['nombres'] . ' ' . $estudiante['apellidos']) ?></h5>
+                <div class="text-muted small mb-2"><code><?= esc($estudiante['codigo']) ?></code></div>
+                <a href="<?= site_url('admin/students/' . $estudiante['id'] . '/edit') ?>" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-camera me-1"></i>Cambiar foto
+                </a>
+            </div>
+        </div>
+
         <!-- Acudiente -->
         <div class="table-card mb-4">
             <div class="card-header bg-white">
