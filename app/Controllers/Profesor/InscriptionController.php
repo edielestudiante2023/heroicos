@@ -100,7 +100,7 @@ class InscriptionController extends BaseController
     /**
      * Get professor ID from session
      */
-    private function getProfesorId(): int
+    private function getProfesorId(): ?int
     {
         $db = \Config\Database::connect();
         $userId = session()->get('user_id');
@@ -109,6 +109,6 @@ class InscriptionController extends BaseController
             ->where('usuario_id', $userId)
             ->get()->getRowArray();
 
-        return $profesor['id'] ?? 0;
+        return $profesor['id'] ?? null;
     }
 }
