@@ -51,7 +51,7 @@ class InscripcionModel extends Model
      */
     public function getByGrupo(int $grupoId): array
     {
-        return $this->select('inscripciones.*, e.codigo, e.nombres, e.apellidos, e.fecha_nacimiento')
+        return $this->select('inscripciones.*, e.codigo, e.nombres, e.apellidos, e.fecha_nacimiento, e.foto, e.sexo')
             ->join('estudiantes e', 'e.id = inscripciones.estudiante_id')
             ->where('inscripciones.grupo_id', $grupoId)
             ->where('inscripciones.estado', 'activa')

@@ -28,9 +28,14 @@
             <div class="table-card h-100">
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center gap-3 mb-3">
-                        <div class="user-avatar" style="width:48px;height:48px;font-size:1.2rem;">
-                            <?= strtoupper(substr($est['nombres'], 0, 1) . substr($est['apellidos'], 0, 1)) ?>
-                        </div>
+                        <?php if (!empty($est['foto'])): ?>
+                            <img src="<?= base_url($est['foto']) ?>" alt="<?= esc($est['nombres']) ?>"
+                                 style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--heroicos-primary);">
+                        <?php else: ?>
+                            <div class="user-avatar" style="width:48px;height:48px;font-size:1.2rem;">
+                                <?= strtoupper(substr($est['nombres'], 0, 1) . substr($est['apellidos'], 0, 1)) ?>
+                            </div>
+                        <?php endif; ?>
                         <div>
                             <h6 class="mb-0"><?= esc($est['nombres'] . ' ' . $est['apellidos']) ?></h6>
                             <small class="text-muted">Codigo: <?= esc($est['codigo'] ?? 'N/A') ?></small>

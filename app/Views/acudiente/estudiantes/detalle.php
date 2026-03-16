@@ -15,6 +15,14 @@
         <div class="table-card">
             <div class="card-header"><i class="bi bi-person me-2"></i>Datos del Estudiante</div>
             <div class="card-body">
+                <?php if (!empty($estudiante['foto'])): ?>
+                <div class="text-center mb-3">
+                    <img src="<?= base_url($estudiante['foto']) ?>" alt="<?= esc($estudiante['nombres']) ?>"
+                         class="rounded-circle"
+                         style="width:100px;height:100px;object-fit:cover;border:3px solid var(--heroicos-primary);">
+                    <div class="fw-bold mt-2"><?= esc($estudiante['nombres'] . ' ' . $estudiante['apellidos']) ?></div>
+                </div>
+                <?php endif; ?>
                 <table class="table table-borderless mb-0">
                     <tr><th class="text-muted" style="width:40%">Nombre</th><td><?= esc($estudiante['nombres'] . ' ' . $estudiante['apellidos']) ?></td></tr>
                     <tr><th class="text-muted">Codigo</th><td><?= esc($estudiante['codigo'] ?? 'N/A') ?></td></tr>

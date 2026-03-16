@@ -228,9 +228,19 @@
                             <tr>
                                 <td><code><?= esc($est['codigo']) ?></code></td>
                                 <td>
-                                    <a href="<?= site_url('admin/students/' . $est['estudiante_id']) ?>">
-                                        <?= esc($est['nombres'] . ' ' . $est['apellidos']) ?>
-                                    </a>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <?php if (!empty($est['foto'])): ?>
+                                            <img src="<?= base_url($est['foto']) ?>" alt="<?= esc($est['nombres']) ?>"
+                                                 style="width:32px;height:32px;border-radius:50%;object-fit:cover;">
+                                        <?php else: ?>
+                                            <div class="user-avatar" style="width:32px;height:32px;font-size:0.8rem;background:<?= ($est['sexo'] ?? 'M') === 'M' ? 'var(--heroicos-primary)' : 'var(--heroicos-secondary)' ?>;color:<?= ($est['sexo'] ?? 'M') === 'M' ? 'white' : '#333' ?>;">
+                                                <?= strtoupper(substr($est['nombres'], 0, 1)) ?>
+                                            </div>
+                                        <?php endif; ?>
+                                        <a href="<?= site_url('admin/students/' . $est['estudiante_id']) ?>">
+                                            <?= esc($est['nombres'] . ' ' . $est['apellidos']) ?>
+                                        </a>
+                                    </div>
                                 </td>
                                 <td><?= $est['edad'] ?> años</td>
                                 <td><?= date('d/m/Y', strtotime($est['fecha_inscripcion'])) ?></td>
