@@ -5,9 +5,14 @@
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
-<a href="<?= site_url('acudiente/estudiantes') ?>" class="btn btn-sm btn-outline-secondary mb-3">
-    <i class="bi bi-arrow-left me-1"></i>Volver
-</a>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="<?= site_url('acudiente/estudiantes') ?>" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+    <a href="<?= site_url('acudiente/estudiantes/' . $estudiante['id'] . '/editar') ?>" class="btn btn-sm btn-primary">
+        <i class="bi bi-pencil-square me-1"></i>Editar Perfil
+    </a>
+</div>
 
 <div class="row g-4">
     <!-- Student Info -->

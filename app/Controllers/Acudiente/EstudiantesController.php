@@ -119,6 +119,139 @@ class EstudiantesController extends BaseController
         ]);
     }
 
+    public function editar(int $id)
+    {
+        $db = \Config\Database::connect();
+        $userId = session()->get('user_id');
+
+        $acudiente = $db->table('acudientes')
+                        ->where('usuario_id', $userId)
+                        ->get()->getRowArray();
+
+        $acudienteId = $acudiente['id'] ?? 0;
+
+        $estudiante = $db->table('estudiantes')
+                         ->where('id', $id)
+                         ->where('acudiente_id', $acudienteId)
+                         ->get()->getRowArray();
+
+        if (!$estudiante) {
+            return redirect()->to('acudiente/estudiantes')
+                ->with('error', 'Estudiante no encontrado.');
+        }
+
+        return view('acudiente/estudiantes/editar', [
+            'title'      => 'Editar Estudiante - Academia Heroicos',
+            'pageTitle'  => 'Editar Estudiante',
+            'estudiante' => $estudiante,
+        ]);
+    }
+
+    public function actualizar(int $id)
+    {
+        $db = \Config\Database::connect();
+        $userId = session()->get('user_id');
+
+        $acudiente = $db->table('acudientes')
+                        ->where('usuario_id', $userId)
+                        ->get()->getRowArray();
+
+        if (!$acudiente) {
+            return redirect()->to('acudiente/estudiantes')
+                ->with('error', 'Perfil de acudiente no encontrado.');
+        }
+
+        $acudienteId = $acudiente['id'];
+
+        $estudiante = $db->table('estudiantes')
+                         ->where('id', $id)
+                         ->where('acudiente_id', $acudienteId)
+                         ->get()->getRowArray();
+
+        if (!$estudiante) {
+            return redirect()->to('acudiente/estudiantes')
+                ->with('error', 'Estudiante no encontrado.');
+        }
+
+        // Arithmetic validation
+        $mathA = (int) $this->request->getPost('math_a');
+        $mathB = (int) $this->request->getPost('math_b');
+        $mathAnswer = (int) $this->request->getPost('math_answer');
+        if ($mathAnswer !== ($mathA + $mathB)) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Respuesta de verificacion incorrecta. Intente de nuevo.');
+        }
+
+        $rules = [
+            'nombres'          => 'required|min_length[2]|max_length[100]',
+            'apellidos'        => 'required|min_length[2]|max_length[100]',
+            'fecha_nacimiento' => 'required|valid_date',
+            'sexo'             => 'required|in_list[M,F]',
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Por favor complete los campos obligatorios correctamente.');
+        }
+
+        $data = [
+            'nombres'             => $this->request->getPost('nombres'),
+            'apellidos'           => $this->request->getPost('apellidos'),
+            'tipo_documento'      => $this->request->getPost('tipo_documento') ?: 'TI',
+            'numero_documento'    => $this->request->getPost('numero_documento') ?: '',
+            'fecha_nacimiento'    => $this->request->getPost('fecha_nacimiento'),
+            'sexo'                => $this->request->getPost('sexo'),
+            'talla_camiseta'      => $this->request->getPost('talla_camiseta') ?: null,
+            'talla_pantaloneta'   => $this->request->getPost('talla_pantaloneta') ?: null,
+            'talla_medias'        => $this->request->getPost('talla_medias') ?: null,
+            'posicion'            => $this->request->getPost('posicion') ?: null,
+            'pie_dominante'       => $this->request->getPost('pie_dominante') ?: 'derecho',
+            'eps'                 => $this->request->getPost('eps') ?: '',
+            'grupo_sanguineo'     => $this->request->getPost('grupo_sanguineo') ?: '',
+            'alergias'            => $this->request->getPost('alergias'),
+            'condiciones_medicas' => $this->request->getPost('condiciones_medicas'),
+            'medicamentos'        => $this->request->getPost('medicamentos'),
+            'contacto_emergencia' => $this->request->getPost('contacto_emergencia'),
+            'telefono_emergencia' => $this->request->getPost('telefono_emergencia'),
+            'updated_at'          => date('Y-m-d H:i:s'),
+        ];
+
+        // Handle optional photo change
+        $foto = $this->request->getFile('foto');
+        if ($foto && $foto->isValid() && !$foto->hasMoved()) {
+            if ($foto->getSize() > 2 * 1024 * 1024) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'La foto excede el limite de 2MB.');
+            }
+            if (!in_array($foto->getMimeType(), ['image/jpeg', 'image/png', 'image/webp'])) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'La foto debe ser JPG, PNG o WebP.');
+            }
+
+            $uploadPath = FCPATH . 'uploads/estudiantes';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+            $newName = $estudiante['codigo'] . '_' . $foto->getRandomName();
+            $foto->move($uploadPath, $newName);
+
+            // Delete old photo if exists
+            if (!empty($estudiante['foto'])) {
+                $oldPath = FCPATH . $estudiante['foto'];
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
+            }
+
+            $data['foto'] = 'uploads/estudiantes/' . $newName;
+        }
+
+        $db->table('estudiantes')->where('id', $id)->update($data);
+
+        return redirect()->to('acudiente/estudiantes/' . $id)
+            ->with('message', 'Perfil del estudiante actualizado correctamente.');
+    }
+
     public function crear()
     {
         return view('acudiente/estudiantes/crear', [
