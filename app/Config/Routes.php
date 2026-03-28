@@ -132,6 +132,10 @@ $routes->group('admin', ['filter' => 'role:admin'], static function ($routes) {
     $routes->post('tournaments/(:num)/enroll', 'Admin\TournamentController::enrollStudent/$1');
     $routes->post('tournaments/(:num)/unenroll/(:num)', 'Admin\TournamentController::unenrollStudent/$1/$2');
     $routes->post('tournaments/(:num)/status', 'Admin\TournamentController::changeStatus/$1');
+
+    // Auditoria
+    $routes->get('auditoria', 'Admin\AuditoriaController::index');
+    $routes->get('auditoria/(:num)', 'Admin\AuditoriaController::detalle/$1');
 });
 
 // ============================================================================

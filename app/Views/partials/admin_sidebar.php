@@ -45,3 +45,9 @@
     <i class="bi bi-trophy"></i>
     Torneos
 </a>
+
+<div class="nav-section">Sistema</div>
+<a href="<?= site_url('admin/auditoria') ?>" class="nav-link <?= ($activePage ?? '') === 'auditoria' ? 'active' : '' ?>">
+    <i class="bi bi-shield-check"></i>
+    Auditoria
+</a>
