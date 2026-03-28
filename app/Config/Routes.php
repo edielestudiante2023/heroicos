@@ -65,6 +65,8 @@ $routes->group('admin', ['filter' => 'role:admin'], static function ($routes) {
     $routes->put('students/(:num)', 'Admin\StudentController::update/$1');
     $routes->delete('students/(:num)', 'Admin\StudentController::delete/$1');
     $routes->delete('students/(:num)/hard', 'Admin\StudentController::hardDelete/$1');
+    $routes->post('students/(:num)/historial', 'Admin\StudentController::guardarHistorial/$1');
+    $routes->post('students/(:num)/historial/(:num)/eliminar', 'Admin\StudentController::eliminarHistorial/$1/$2');
 
     // Groups management
     $routes->get('groups', 'Admin\GroupController::index');

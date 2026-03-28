@@ -176,6 +176,122 @@
                 <?php endif; ?>
             </div>
         </div>
+        <!-- Sports History -->
+        <div class="table-card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-trophy me-2"></i>Historial Deportivo</h5>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#modalHistorial">
+                    <i class="bi bi-plus-circle me-1"></i>Agregar
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <?php if (empty($historial)): ?>
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-trophy fs-1 d-block mb-2"></i>
+                    No hay registros de historial deportivo
+                </div>
+                <?php else: ?>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Academia Anterior</th>
+                                <th>Periodo</th>
+                                <th>Posicion</th>
+                                <th>Torneos</th>
+                                <th>Logros</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($historial as $h): ?>
+                            <tr>
+                                <td><?= esc($h['academia_anterior'] ?: '-') ?></td>
+                                <td><?= esc($h['periodo'] ?: '-') ?></td>
+                                <td><?= esc($h['posicion_juego'] ?: '-') ?></td>
+                                <td class="small"><?= esc($h['torneos_participados'] ?: '-') ?></td>
+                                <td class="small"><?= esc($h['logros'] ?: '-') ?></td>
+                                <td>
+                                    <form action="<?= site_url('admin/students/' . $estudiante['id'] . '/historial/' . $h['id'] . '/eliminar') ?>" method="post" class="d-inline">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar este registro?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php if ($h['observaciones']): ?>
+                            <tr>
+                                <td colspan="6" class="small text-muted border-0 pt-0"><i class="bi bi-chat-quote me-1"></i><?= esc($h['observaciones']) ?></td>
+                            </tr>
+                            <?php endif; ?>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Modal Agregar Historial -->
+        <div class="modal fade" id="modalHistorial" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form action="<?= site_url('admin/students/' . $estudiante['id'] . '/historial') ?>" method="post">
+                        <?= csrf_field() ?>
+                        <div class="modal-header">
+                            <h6 class="modal-title"><i class="bi bi-trophy me-2"></i>Agregar Historial Deportivo</h6>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small">Academia anterior</label>
+                                    <input type="text" name="academia_anterior" class="form-control form-control-sm" placeholder="Ej: Club Deportivo XYZ">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Periodo</label>
+                                    <input type="text" name="periodo" class="form-control form-control-sm" placeholder="Ej: 2023-2024">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">Posicion de juego</label>
+                                    <select name="posicion_juego" class="form-select form-select-sm">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Portero">Portero</option>
+                                        <option value="Defensa Central">Defensa Central</option>
+                                        <option value="Lateral Derecho">Lateral Derecho</option>
+                                        <option value="Lateral Izquierdo">Lateral Izquierdo</option>
+                                        <option value="Mediocampista Central">Mediocampista Central</option>
+                                        <option value="Mediocampista Ofensivo">Mediocampista Ofensivo</option>
+                                        <option value="Mediocampista Defensivo">Mediocampista Defensivo</option>
+                                        <option value="Extremo Derecho">Extremo Derecho</option>
+                                        <option value="Extremo Izquierdo">Extremo Izquierdo</option>
+                                        <option value="Delantero Centro">Delantero Centro</option>
+                                        <option value="Segundo Delantero">Segundo Delantero</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small">Torneos participados</label>
+                                    <textarea name="torneos_participados" class="form-control form-control-sm" rows="2" placeholder="Ej: Copa Navidad 2023, Torneo Interligas 2024..."></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small">Logros</label>
+                                    <textarea name="logros" class="form-control form-control-sm" rows="2" placeholder="Ej: Campeon Sub-12, Mejor jugador..."></textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small">Observaciones</label>
+                                    <textarea name="observaciones" class="form-control form-control-sm" rows="2" placeholder="Notas adicionales..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-save me-1"></i>Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Sidebar -->

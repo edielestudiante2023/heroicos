@@ -4,6 +4,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\StudentModel;
+use App\Models\EstudianteHistorialDeportivoModel;
 
 class StudentController extends BaseController
 {
@@ -184,11 +185,16 @@ class StudentController extends BaseController
                      ->get()
                      ->getResultArray();
 
+        // Get student's sports history
+        $historialModel = new EstudianteHistorialDeportivoModel();
+        $historial = $historialModel->getByEstudiante($id);
+
         return view('admin/students/show', [
             'title'      => 'Detalle Estudiante - Academia Heroicos',
             'pageTitle'  => 'Detalle de Estudiante',
             'estudiante' => $estudiante,
             'grupos'     => $grupos,
+            'historial'  => $historial,
         ]);
     }
 
@@ -397,6 +403,55 @@ class StudentController extends BaseController
             return redirect()->to('/admin/students')
                            ->with('error', 'Error al eliminar estudiante: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Store a sports history entry for a student
+     */
+    public function guardarHistorial(int $estudianteId)
+    {
+        $estudiante = $this->studentModel->find($estudianteId);
+        if (!$estudiante) {
+            return redirect()->back()->with('error', 'Estudiante no encontrado.');
+        }
+
+        $historialModel = new EstudianteHistorialDeportivoModel();
+
+        $historialModel->insert([
+            'estudiante_id'        => $estudianteId,
+            'academia_anterior'    => $this->request->getPost('academia_anterior'),
+            'periodo'              => $this->request->getPost('periodo'),
+            'torneos_participados' => $this->request->getPost('torneos_participados'),
+            'logros'               => $this->request->getPost('logros'),
+            'posicion_juego'       => $this->request->getPost('posicion_juego'),
+            'observaciones'        => $this->request->getPost('observaciones'),
+        ]);
+
+        $this->logAction('CREATE_HISTORIAL', 'estudiante_historial_deportivo', $estudianteId);
+
+        return redirect()->to("admin/students/{$estudianteId}")
+            ->with('message', 'Historial deportivo agregado exitosamente.');
+    }
+
+    /**
+     * Delete a sports history entry
+     */
+    public function eliminarHistorial(int $estudianteId, int $historialId)
+    {
+        $historialModel = new EstudianteHistorialDeportivoModel();
+        $registro = $historialModel->where('id', $historialId)
+            ->where('estudiante_id', $estudianteId)
+            ->first();
+
+        if (!$registro) {
+            return redirect()->back()->with('error', 'Registro no encontrado.');
+        }
+
+        $historialModel->delete($historialId);
+        $this->logAction('DELETE_HISTORIAL', 'estudiante_historial_deportivo', $historialId);
+
+        return redirect()->to("admin/students/{$estudianteId}")
+            ->with('message', 'Registro de historial eliminado.');
     }
 
     /**
