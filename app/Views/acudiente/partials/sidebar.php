@@ -14,6 +14,12 @@
     Horarios
 </a>
 
+<div class="nav-section">Clases</div>
+<a href="<?= site_url('acudiente/clases-particulares') ?>" class="nav-link <?= str_starts_with(uri_string(), 'acudiente/clases-particulares') ? 'active' : '' ?>">
+    <i class="bi bi-person-video3"></i>
+    Clases Particulares
+</a>
+
 <div class="nav-section">Pagos</div>
 <a href="<?= site_url('acudiente/pagos') ?>" class="nav-link <?= uri_string() === 'acudiente/pagos' ? 'active' : '' ?>">
     <i class="bi bi-wallet2"></i>

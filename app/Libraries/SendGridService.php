@@ -6,6 +6,8 @@ use App\Models\EmailEnviadoModel;
 use App\Models\PlantillaEmailModel;
 use SendGrid;
 use SendGrid\Mail\Mail;
+use SendGrid\Mail\TrackingSettings;
+use SendGrid\Mail\ClickTracking;
 
 class SendGridService
 {
@@ -110,6 +112,14 @@ class SendGridService
             $email->setSubject($asunto);
             $email->addTo($destEmail, $destNombre);
             $email->addContent('text/html', $cuerpoHtml);
+
+            // Disable click tracking to prevent URL rewriting
+            $trackingSettings = new TrackingSettings();
+            $clickTracking = new ClickTracking();
+            $clickTracking->setEnable(false);
+            $clickTracking->setEnableText(false);
+            $trackingSettings->setClickTracking($clickTracking);
+            $email->setTrackingSettings($trackingSettings);
 
             // Add attachment if provided
             if ($archivoPath && file_exists($archivoPath)) {

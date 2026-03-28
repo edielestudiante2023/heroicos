@@ -147,6 +147,11 @@ $routes->group('profesor', ['filter' => 'role:admin,profesor'], static function 
     // Inscription links
     $routes->get('inscripcion', 'Profesor\InscriptionController::index');
     $routes->post('inscripcion/generar', 'Profesor\InscriptionController::generate');
+
+    // Clases Particulares
+    $routes->get('clases-particulares', 'Profesor\ClaseParticularController::index');
+    $routes->get('clases-particulares/(:num)', 'Profesor\ClaseParticularController::ver/$1');
+    $routes->post('clases-particulares/(:num)/responder', 'Profesor\ClaseParticularController::responder/$1');
 });
 
 // ============================================================================
@@ -181,6 +186,13 @@ $routes->group('acudiente', ['filter' => 'role:admin,acudiente'], static functio
     $routes->get('paz-y-salvo', 'Acudiente\PazYSalvoController::index');
     $routes->post('paz-y-salvo/solicitar', 'Acudiente\PazYSalvoController::solicitar');
     $routes->get('paz-y-salvo/descargar/(:num)', 'Acudiente\PazYSalvoController::descargar/$1');
+
+    // Clases Particulares
+    $routes->get('clases-particulares', 'Acudiente\ClasesParticularesController::index');
+    $routes->get('clases-particulares/solicitar', 'Acudiente\ClasesParticularesController::solicitar');
+    $routes->post('clases-particulares/guardar', 'Acudiente\ClasesParticularesController::guardar');
+    $routes->post('clases-particulares/aceptar-precio/(:num)', 'Acudiente\ClasesParticularesController::aceptarPrecio/$1');
+    $routes->post('clases-particulares/rechazar-precio/(:num)', 'Acudiente\ClasesParticularesController::rechazarPrecio/$1');
 });
 
 // ============================================================================
