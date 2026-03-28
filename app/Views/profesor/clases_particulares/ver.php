@@ -93,7 +93,7 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Accion <span class="text-danger">*</span></label>
-                        <div class="d-flex gap-3">
+                        <div class="d-flex gap-2 flex-wrap">
                             <div class="form-check">
                                 <input class="form-check-input" type="radio" name="accion" id="accionAprobar" value="aprobar" checked>
                                 <label class="form-check-label text-success fw-semibold" for="accionAprobar">
@@ -106,6 +106,14 @@
                                     <i class="bi bi-x-circle"></i> Rechazar
                                 </label>
                             </div>
+                            <?php if (!empty($otrosProfesores)): ?>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="accion" id="accionReasignar" value="reasignar">
+                                <label class="form-check-label text-primary fw-semibold" for="accionReasignar">
+                                    <i class="bi bi-arrow-repeat"></i> Sugerir otro profesor
+                                </label>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -123,6 +131,23 @@
                         <div class="mb-3">
                             <label class="form-label">Motivo del rechazo <span class="text-danger">*</span></label>
                             <textarea name="motivo_rechazo" class="form-control" rows="3" placeholder="Explica por que no puedes aceptar esta solicitud..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Campos para reasignar -->
+                    <div id="camposReasignar" style="display:none">
+                        <div class="mb-3">
+                            <label class="form-label">Profesor sugerido <span class="text-danger">*</span></label>
+                            <select name="nuevo_profesor_id" class="form-select">
+                                <option value="">Seleccionar profesor...</option>
+                                <?php foreach ($otrosProfesores ?? [] as $op): ?>
+                                <option value="<?= $op['id'] ?>">
+                                    <?= esc($op['nombres'] . ' ' . $op['apellidos']) ?>
+                                    <?= $op['especialidad'] ? ' - ' . esc($op['especialidad']) : '' ?>
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text">La solicitud sera reasignada a este profesor y el acudiente sera notificado.</div>
                         </div>
                     </div>
 
@@ -185,9 +210,10 @@
 <script>
 document.querySelectorAll('input[name="accion"]').forEach(radio => {
     radio.addEventListener('change', function() {
-        const aprobar = this.value === 'aprobar';
-        document.getElementById('camposAprobar').style.display = aprobar ? 'block' : 'none';
-        document.getElementById('camposRechazar').style.display = aprobar ? 'none' : 'block';
+        document.getElementById('camposAprobar').style.display = this.value === 'aprobar' ? 'block' : 'none';
+        document.getElementById('camposRechazar').style.display = this.value === 'rechazar' ? 'block' : 'none';
+        const reasignar = document.getElementById('camposReasignar');
+        if (reasignar) reasignar.style.display = this.value === 'reasignar' ? 'block' : 'none';
     });
 });
 </script>
