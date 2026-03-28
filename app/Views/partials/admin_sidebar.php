@@ -51,3 +51,7 @@
     <i class="bi bi-shield-check"></i>
     Auditoria
 </a>
+<a href="<?= site_url('admin/configuracion') ?>" class="nav-link <?= ($activePage ?? '') === 'configuracion' ? 'active' : '' ?>">
+    <i class="bi bi-gear"></i>
+    Configuracion
+</a>

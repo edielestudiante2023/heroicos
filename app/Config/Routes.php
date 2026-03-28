@@ -136,6 +136,10 @@ $routes->group('admin', ['filter' => 'role:admin'], static function ($routes) {
     // Auditoria
     $routes->get('auditoria', 'Admin\AuditoriaController::index');
     $routes->get('auditoria/(:num)', 'Admin\AuditoriaController::detalle/$1');
+
+    // Configuracion
+    $routes->get('configuracion', 'Admin\ConfiguracionController::index');
+    $routes->post('configuracion/guardar', 'Admin\ConfiguracionController::guardar');
 });
 
 // ============================================================================
