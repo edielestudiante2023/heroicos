@@ -33,6 +33,12 @@ $routes->post('registro/(:segment)', 'RegistroController::store/$1');
 // Generic dashboard - redirects based on role
 $routes->get('dashboard', 'DashboardController::index', ['filter' => 'auth']);
 
+// Notificaciones (all authenticated roles)
+$routes->get('notificaciones', 'NotificacionController::index', ['filter' => 'auth']);
+$routes->get('notificaciones/recientes', 'NotificacionController::recientes', ['filter' => 'auth']);
+$routes->post('notificaciones/marcar-leida/(:num)', 'NotificacionController::marcarLeida/$1', ['filter' => 'auth']);
+$routes->post('notificaciones/marcar-todas-leidas', 'NotificacionController::marcarTodasLeidas', ['filter' => 'auth']);
+
 // ============================================================================
 // ADMIN ROUTES
 // ============================================================================

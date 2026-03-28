@@ -340,24 +340,47 @@
                 <h1 class="page-title"><?= $pageTitle ?? 'Dashboard' ?></h1>
             </div>
 
-            <div class="user-menu dropdown">
-                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
-                    <span class="d-none d-md-inline"><?= esc(session()->get('nombre')) ?></span>
-                    <div class="user-avatar">
-                        <?= strtoupper(substr(session()->get('nombre') ?? 'U', 0, 1)) ?>
+            <div class="d-flex align-items-center gap-3">
+                <!-- Notification Bell -->
+                <div class="dropdown" id="notifDropdown">
+                    <a href="#" class="position-relative text-decoration-none" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="notifBell" style="color:#555;font-size:1.35rem;">
+                        <i class="bi bi-bell"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notifBadge" style="display:none;font-size:0.65rem;"></span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow-sm" style="width:360px;max-height:420px;padding:0;">
+                        <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                            <strong class="small">Notificaciones</strong>
+                            <button class="btn btn-link btn-sm text-decoration-none p-0" id="notifMarkAll" style="font-size:0.75rem;">Marcar todas leidas</button>
+                        </div>
+                        <div id="notifList" style="max-height:320px;overflow-y:auto;">
+                            <div class="text-center text-muted py-4 small">Cargando...</div>
+                        </div>
+                        <div class="border-top text-center py-2">
+                            <a href="<?= site_url('notificaciones') ?>" class="small text-decoration-none">Ver todas las notificaciones</a>
+                        </div>
                     </div>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <?php
-                        $perfilUrl = '#';
-                        $rolNombre = session()->get('rol_nombre');
-                        if ($rolNombre === 'acudiente') $perfilUrl = site_url('acudiente/perfil');
-                        elseif ($rolNombre === 'admin' || $rolNombre === 'administrador') $perfilUrl = site_url('admin/configuracion');
-                    ?>
-                    <li><a class="dropdown-item" href="<?= $perfilUrl ?>"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="<?= site_url('logout') ?>"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión</a></li>
-                </ul>
+                </div>
+
+                <!-- User Menu -->
+                <div class="user-menu dropdown">
+                    <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown">
+                        <span class="d-none d-md-inline"><?= esc(session()->get('nombre')) ?></span>
+                        <div class="user-avatar">
+                            <?= strtoupper(substr(session()->get('nombre') ?? 'U', 0, 1)) ?>
+                        </div>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <?php
+                            $perfilUrl = '#';
+                            $rolNombre = session()->get('rol_nombre');
+                            if ($rolNombre === 'acudiente') $perfilUrl = site_url('acudiente/perfil');
+                            elseif ($rolNombre === 'admin' || $rolNombre === 'administrador') $perfilUrl = site_url('admin/configuracion');
+                        ?>
+                        <li><a class="dropdown-item" href="<?= $perfilUrl ?>"><i class="bi bi-person me-2"></i>Mi Perfil</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="<?= site_url('logout') ?>"><i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesion</a></li>
+                    </ul>
+                </div>
             </div>
         </nav>
 
@@ -614,6 +637,88 @@
         $(el).DataTable($.extend(true, defaults, opts || {}));
     }
     </script>
+    <!-- Notification Bell Logic -->
+    <script>
+    (function() {
+        var badge = document.getElementById('notifBadge');
+        var list = document.getElementById('notifList');
+        var markAllBtn = document.getElementById('notifMarkAll');
+        var bell = document.getElementById('notifBell');
+
+        function timeAgo(dateStr) {
+            var now = new Date();
+            var date = new Date(dateStr);
+            var diff = Math.floor((now - date) / 1000);
+            if (diff < 60) return 'Ahora';
+            if (diff < 3600) return Math.floor(diff / 60) + 'm';
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h';
+            return Math.floor(diff / 86400) + 'd';
+        }
+
+        function loadNotifications() {
+            fetch('<?= site_url("notificaciones/recientes") ?>', { cache: 'no-store' })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    // Badge
+                    if (data.unreadCount > 0) {
+                        badge.textContent = data.unreadCount > 9 ? '9+' : data.unreadCount;
+                        badge.style.display = '';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+
+                    // List
+                    if (!data.notificaciones || data.notificaciones.length === 0) {
+                        list.innerHTML = '<div class="text-center text-muted py-4 small">No tienes notificaciones</div>';
+                        return;
+                    }
+
+                    var html = '';
+                    data.notificaciones.forEach(function(n) {
+                        var unread = !n.leida || n.leida === '0' || n.leida === false;
+                        var bg = unread ? 'background:#f0f4ff;' : '';
+                        var url = n.url ? '<?= site_url("") ?>' + n.url : '#';
+                        html += '<a href="' + url + '" class="d-block px-3 py-2 text-decoration-none border-bottom notif-item" data-id="' + n.id + '" style="' + bg + '">';
+                        html += '<div class="d-flex justify-content-between">';
+                        html += '<strong class="small text-dark" style="font-size:0.82rem;">' + (n.titulo || '') + '</strong>';
+                        html += '<span class="text-muted" style="font-size:0.7rem;">' + timeAgo(n.created_at) + '</span>';
+                        html += '</div>';
+                        html += '<div class="text-muted" style="font-size:0.78rem;">' + (n.mensaje || '') + '</div>';
+                        html += '</a>';
+                    });
+                    list.innerHTML = html;
+
+                    // Mark as read on click
+                    list.querySelectorAll('.notif-item').forEach(function(item) {
+                        item.addEventListener('click', function() {
+                            var id = this.getAttribute('data-id');
+                            fetch('<?= site_url("notificaciones/marcar-leida/") ?>' + id, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                        });
+                    });
+                })
+                .catch(function() {});
+        }
+
+        // Load on page load
+        loadNotifications();
+
+        // Refresh when bell is clicked
+        bell.addEventListener('click', function() { loadNotifications(); });
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadNotifications, 30000);
+
+        // Mark all as read
+        markAllBtn.addEventListener('click', function() {
+            fetch('<?= site_url("notificaciones/marcar-todas-leidas") ?>', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(function() {
+                    badge.style.display = 'none';
+                    list.querySelectorAll('.notif-item').forEach(function(el) { el.style.background = ''; });
+                });
+        });
+    })();
+    </script>
+
     <?= $this->renderSection('scripts') ?>
 </body>
 </html>
