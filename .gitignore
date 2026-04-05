@@ -132,5 +132,13 @@ public/migrate_production_sql.php
 public/fix_production_data.php
 .claude/
 
+#-------------------------
+# Archivos basura / temporales del proyecto
+#-------------------------
+cookies.txt
+*.stackdump
+tmp_*.php
+composer-setup.php
+
 /results/
 /phpunit*.xml

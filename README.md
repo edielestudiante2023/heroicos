@@ -1,69 +1,165 @@
-# CodeIgniter 4 Application Starter
+# Heroicos Futbol Club — Sistema de Gestion de Academia
 
-## What is CodeIgniter?
+Plataforma digital para la gestion integral de una academia de futbol. Administra estudiantes, acudientes, grupos, horarios, pagos, asistencia, torneos, clases particulares y comunicaciones por email.
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+**Empresa:** Cycloid Talent
+**Repositorio:** [github.com/edielestudiante2023/heroicos](https://github.com/edielestudiante2023/heroicos)
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+---
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+## Stack tecnologico
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+| Componente | Tecnologia |
+|------------|-----------|
+| Backend | PHP 8.2 + CodeIgniter 4.7 |
+| Base de datos | MySQL 8.0 (DigitalOcean Managed, SSL required) |
+| Servidor web | Apache (XAMPP local) / Nginx (produccion) |
+| Email | SendGrid API v8.1 |
+| PDF | TCPDF 6.10 (paz y salvos, certificados) |
+| Frontend | Bootstrap 5.3 + Vanilla JS |
+| PWA | Service Workers + IndexedDB (asistencia y pagos offline) |
+| Iconos | Bootstrap Icons |
 
-## Installation & updates
+---
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+## Modulos principales (12)
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+| Modulo | Descripcion |
+|--------|-------------|
+| Autenticacion | Login con roles, remember me, recuperacion de password por email |
+| Gestion de usuarios | CRUD de admin, profesores y acudientes con envio de credenciales |
+| Estudiantes | Registro, perfil con foto, historial deportivo, consentimientos |
+| Grupos y categorias | Categorias por edad, grupos con cupos, inscripcion/desinscripcion |
+| Horarios | Definicion de horarios y asignacion a grupos |
+| Cartera | Generacion automatica de cargos, seguimiento de pagos, recordatorios |
+| Pagos | Carga de comprobantes, revision admin, aprobacion/rechazo |
+| Tarifas | Configuracion de montos por concepto, categoria y periodo |
+| Asistencia | Registro por sesion de clase, reportes por grupo y fechas |
+| Torneos | Creacion, inscripcion con cupo, cobro asociado |
+| Clases particulares | Solicitud, negociacion de precio, reasignacion entre profesores |
+| Paz y salvos | Solicitud, generacion PDF, envio por email |
 
-## Setup
+---
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+## Roles de usuario
 
-## Important Change with index.php
+| Rol | Acceso |
+|-----|--------|
+| admin | Todo el sistema + gestion de usuarios + configuracion + auditoria |
+| profesor | Grupos asignados + asistencia + enlaces de inscripcion + clases particulares |
+| acudiente | Portal de estudiantes + pagos + horarios + paz y salvos + clases particulares |
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+---
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+## Estructura del proyecto
 
-**Please** read the user guide for a better explanation of how CI4 works!
+```
+heroicos/
+├── app/
+│   ├── Config/            # Routes, Database, Filters, App
+│   ├── Controllers/
+│   │   ├── Admin/         # ~12 controladores (Users, Students, Groups, Payments, etc.)
+│   │   ├── Profesor/      # 5 controladores (Dashboard, Attendance, Groups, etc.)
+│   │   ├── Acudiente/     # 7 controladores (Estudiantes, Pagos, Horarios, etc.)
+│   │   └── Api/           # OfflineController (PWA sync)
+│   ├── Database/
+│   │   ├── Migrations/    # 42 migraciones
+│   │   └── Seeds/         # Seeders
+│   ├── Filters/           # AuthFilter, RoleFilter, ApiAuthFilter
+│   ├── Helpers/           # Funciones auxiliares
+│   ├── Libraries/         # SendGridService, PazYSalvoPdfGenerator
+│   ├── Models/            # ~27 modelos
+│   └── Views/             # Vistas organizadas por rol
+├── public/
+│   ├── assets/            # JS (PWA), iconos, CSS
+│   ├── sw.js              # Service Worker
+│   ├── manifest.json      # PWA manifest
+│   └── index.php          # Punto de entrada
+├── vendor/                # Dependencias Composer
+├── writable/              # Logs, cache, sesiones, uploads
+├── docs/                  # Documentacion tecnica
+├── tests/                 # Tests PHPUnit
+├── .env                   # Variables de entorno (NO commitear)
+├── .env.example           # Template de variables (SI commitear)
+├── composer.json          # Dependencias PHP
+└── spark                  # CLI de CodeIgniter
+```
 
-## Repository Management
+---
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+## Requisitos previos
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+- PHP 8.2+ con extensiones: intl, mbstring, mysqlnd, curl, json
+- MySQL 8.0+
+- Composer 2.x
+- Apache con mod_rewrite o Nginx
+- XAMPP (para desarrollo local)
 
-## Server Requirements
+---
 
-PHP version 8.2 or higher is required, with the following extensions installed:
+## Instalacion local
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+```bash
+# 1. Clonar repositorio
+git clone https://github.com/edielestudiante2023/heroicos.git
+cd heroicos
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - The end of life date for PHP 8.1 was December 31, 2025.
-> - If you are still using below PHP 8.2, you should upgrade immediately.
-> - The end of life date for PHP 8.2 will be December 31, 2026.
+# 2. Instalar dependencias
+composer install
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+# 3. Configurar entorno
+cp .env.example .env
+# Editar .env con credenciales locales
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+# 4. Ejecutar migraciones
+php spark migrate
+
+# 5. Ejecutar seeders (datos iniciales)
+php spark db:seed
+
+# 6. Iniciar servidor de desarrollo
+php spark serve
+# O acceder via XAMPP: http://localhost/heroicos/public/
+```
+
+**Credenciales por defecto:** `admin@heroicos.com` / `Admin123*` (cambiar despues del primer login)
+
+---
+
+## Variables de entorno
+
+| Variable | Descripcion |
+|----------|-------------|
+| `CI_ENVIRONMENT` | development / production |
+| `app.baseURL` | URL base de la aplicacion |
+| `database.default.*` | Credenciales BD local |
+| `database.production.*` | Credenciales BD produccion (DigitalOcean) |
+| `encryption.key` | Clave de encriptacion (hex2bin) |
+| `session.driver` | Driver de sesiones (DatabaseHandler) |
+| `sendgrid.apiKey` | API Key de SendGrid |
+| `sendgrid.fromEmail` | Email remitente |
+| `sendgrid.fromName` | Nombre remitente |
+
+---
+
+## Deploy
+
+**Servidor de produccion:**
+- IP: `66.29.154.174` (server1.cycloidtalent.com)
+- OS: Ubuntu 24.04 LTS
+- Ruta: `/www/wwwroot/heroicos`
+- Acceso: SSH con llave ed25519
+
+**Proceso de deploy:**
+1. Desarrollar en rama `cycloid`
+2. Merge a `main`
+3. Push a remoto
+4. Volver a rama `cycloid`
+
+---
+
+## Documentacion adicional
+
+- [docs/HARDENING-heroicos.md](docs/HARDENING-heroicos.md) — Documento de hardening del repositorio
+- [docs/database_design.md](docs/database_design.md) — Diseno de base de datos
+- [docs/PLAN_PROYECTO.md](docs/PLAN_PROYECTO.md) — Plan completo del proyecto

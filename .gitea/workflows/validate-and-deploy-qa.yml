@@ -1,0 +1,115 @@
+name: Validar y Deploy a Dev/QA
+
+on:
+  push:
+    branches: [develop, 'feature/*']
+  pull_request:
+    branches: [develop]
+
+jobs:
+  test:
+    name: Verificacion de sintaxis PHP
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar sintaxis PHP
+        run: |
+          echo "=== Verificando sintaxis PHP ==="
+          find app/ -name "*.php" -print0 | xargs -0 -n1 php -l 2>&1 | grep -v "No syntax errors" || true
+          ERRORS=$(find app/ -name "*.php" -print0 | xargs -0 -n1 php -l 2>&1 | grep -c "Parse error" || true)
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "Se encontraron $ERRORS errores de sintaxis"
+            exit 1
+          fi
+          echo "Sin errores de sintaxis"
+
+  trivy:
+    name: Escaneo de vulnerabilidades (Trivy)
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar dependencias
+        run: composer install --no-dev --no-interaction --prefer-dist
+
+      - name: Ejecutar Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
+          ignore-unfixed: true
+
+  semgrep:
+    name: Analisis estatico de seguridad (Semgrep)
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ejecutar Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/php
+            p/secrets
+            p/security-audit
+
+  secrets-scan:
+    name: Busqueda de credenciales hardcodeadas
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Buscar API Keys y credenciales
+        run: |
+          echo "=== Buscando credenciales hardcodeadas ==="
+          FOUND=0
+
+          # SendGrid API Key pattern
+          if grep -rn "SG\.[a-zA-Z0-9_-]\{20,\}" --include="*.php" app/ public/ 2>/dev/null | grep -v ".env" | grep -v ".example"; then
+            echo "CRITICO: SendGrid API Key encontrada en codigo"
+            FOUND=1
+          fi
+
+          # Generic password patterns
+          if grep -rn "password\s*=\s*['\"][^'\"]\{8,\}['\"]" --include="*.php" app/ 2>/dev/null | grep -v "PASSWORD_DEFAULT" | grep -v "password_hash" | grep -v "password_verify" | grep -v "\.env"; then
+            echo "CRITICO: Password hardcodeado encontrado"
+            FOUND=1
+          fi
+
+          # Database credentials
+          if grep -rn "AVNS_[a-zA-Z0-9_-]\+" --include="*.php" app/ public/ 2>/dev/null; then
+            echo "CRITICO: Credencial de DigitalOcean encontrada"
+            FOUND=1
+          fi
+
+          if [ "$FOUND" -gt 0 ]; then
+            echo "Se encontraron credenciales hardcodeadas"
+            exit 1
+          fi
+
+          echo "No se encontraron credenciales hardcodeadas"
+
+  deploy-qa:
+    name: Deploy a Dev/QA
+    runs-on: ubuntu-latest
+    needs: [trivy, semgrep, secrets-scan]
+    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.QA_HOST }}
+          username: ${{ secrets.QA_USER }}
+          key: ${{ secrets.QA_SSH_KEY }}
+          script: |
+            cd ${{ secrets.QA_PATH }}
+            git pull origin develop
+            composer install --no-dev --no-interaction --prefer-dist
+            php spark migrate
+            echo "Deploy QA completado: $(date)"
